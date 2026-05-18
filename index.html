@@ -64,11 +64,20 @@
       background: rgba(0, 40, 90, 0.8);
       transform: translateY(-2px);
     }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .card-favicon {
+      flex-shrink: 0;
+      border-radius: 3px;
+    }
     .card-title {
       font-size: 1.1rem;
       font-weight: bold;
       color: #a0ffac;
-      margin-bottom: 6px;
     }
     .card-desc {
       font-size: 0.9rem;
@@ -89,15 +98,24 @@
     <p class="subtitle">Pick a sorter to get started.</p>
     <div class="grid">
     <a class="card" href="./princession-orchestra/">
-      <div class="card-title">Princession Orchestra</div>
+      <div class="card-header">
+        <img class="card-favicon" src="./princession-orchestra/favicon.ico" alt="" width="20" height="20">
+        <div class="card-title">Princession Orchestra</div>
+      </div>
       <div class="card-desc">Party rank sorter for all of the songs in Princession Orchestra</div>
     </a>
     <a class="card" href="./si-vis/">
-      <div class="card-title">SI-VIS</div>
+      <div class="card-header">
+        <img class="card-favicon" src="./si-vis/favicon.ico" alt="" width="20" height="20">
+        <div class="card-title">SI-VIS</div>
+      </div>
       <div class="card-desc">Party rank sorter SI-VIS songs</div>
     </a>
     <a class="card" href="./test/">
-      <div class="card-title">Test Sorter</div>
+      <div class="card-header">
+        <img class="card-favicon" src="./test/favicon.ico" alt="" width="20" height="20">
+        <div class="card-title">Test Sorter</div>
+      </div>
       <div class="card-desc">Party rank sorter for your custom list of songs.</div>
     </a>
     </div>
