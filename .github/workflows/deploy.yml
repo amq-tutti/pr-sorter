@@ -44,7 +44,9 @@ jobs:
           echo "slug=$slug" >> "$GITHUB_OUTPUT"
 
       - name: Write meta.json
-        run: node .github/scripts/write-meta.mjs "${{ steps.slug.outputs.slug }}"
+        run: |
+          node .github/scripts/write-meta.mjs "${{ steps.slug.outputs.slug }}"
+          cp customize/favicon.ico dist/favicon.ico
 
       - name: Deploy sorter
         uses: peaceiris/actions-gh-pages@v4
