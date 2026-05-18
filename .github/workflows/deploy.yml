@@ -79,6 +79,7 @@ jobs:
       - name: Generate homepage
         run: |
           mkdir -p homepage-dist
+          cp customize/favicon.ico homepage-dist/favicon.ico
           node .github/scripts/generate-homepage.mjs gh-pages-content homepage-dist/index.html
 
       - name: Deploy homepage

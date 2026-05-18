@@ -35,6 +35,7 @@ const html = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sorter Collection</title>
+  <link rel="icon" href="./favicon.ico">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body {
