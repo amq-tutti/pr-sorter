@@ -1,0 +1,36 @@
+// noinspection SpellCheckingInspection
+
+import type { Song } from '../src/songs';
+
+export const songList = [
+    {"id": 1, "anime": "Asu no Yozora Shoukaihan by Afterglow", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=aaxlWyLU9vY", "mp3": null},
+    {"id": 2, "anime": "Ave Mujica by Ave Mujica", "name": "Bang Dream", "video": "https://youtu.be/QDsd0nyzwz0", "mp3": null},
+    {"id": 3, "anime": "Bad Kids All Bet by RAISE A SUILEN", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=mKt2u5a3-H8", "mp3": null},
+    {"id": 4, "anime": "Beautiful Birthday & RAISE A SUILEN", "name": "Bang Dream", "video": "https://youtu.be/lpV2AtyGCk4", "mp3": null},
+    {"id": 5, "anime": "Choir 's' Choir by Ave Mujica", "name": "Bang Dream", "video": "https://youtu.be/7llj4mh4L-8", "mp3": null},
+    {"id": 6, "anime": "Double Rainbow by Poppin'Party", "name": "Bang Dream", "video": "https://youtu.be/ulGsr3MxM8M", "mp3": null},
+    {"id": 7, "anime": "Ether by Ave Mujica", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=z6k7YIIZ6Hk", "mp3": null},
+    {"id": 8, "anime": "Freedom by Poppin'Party x Misato Fukuen", "name": "Bang Dream", "video": "https://youtu.be/O_qXmu7NXl4", "mp3": null},
+    {"id": 9, "anime": "Hey-day Capriccio by Afterglow", "name": "Bang Dream", "video": "https://youtu.be/bOsPKoj0AcA", "mp3": null},
+    {"id": 10, "anime": "Kamisama, Baka by Ave Mujica", "name": "Bang Dream", "video": "https://youtu.be/vmheOfqsH_o", "mp3": null},
+    {"id": 11, "anime": "KiLLKiSS by Ave Mujica", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=RexyoaXaQ1o", "mp3": null},
+    {"id": 12, "anime": "Kimi ga Inakucha, Hello Happy World", "name": "Bang Dream", "video": "https://naedist.animemusicquiz.com/8poyjw.webm", "mp3": null},
+    {"id": 13, "anime": "Mugen My World by Mugendai Mewtype", "name": "Bang Dream", "video": "https://youtube.com/watch?v=GB2MEvY2sQk", "mp3": null},
+    {"id": 14, "anime": "Radiate Warriors by Pastel＊Palettes", "name": "Bang Dream", "video": "https://youtu.be/dS-SUwftzmM", "mp3": null},
+    {"id": 15, "anime": "Returns by Poppin'Party", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=rBL930dHVkY", "mp3": null},
+    {"id": 16, "anime": "Roku-chou Nen to Ichiya Monogatari by Roselia", "name": "Bang Dream", "video": "https://youtu.be/8OeGR6gMy7E", "mp3": null},
+    {"id": 17, "anime": "Sing Alive by Roselia", "name": "Bang Dream", "video": "https://naedist.animemusicquiz.com/2h5qt3.webm", "mp3": null},
+    {"id": 18, "anime": "Mayoi Uta by MyGO!!!!!", "name": "Bang Dream", "video": "https://naedist.animemusicquiz.com/vppf6y.webm", "mp3": null},
+    {"id": 19, "anime": "Smiling & Singing A Song by Hello, Happy World!", "name": "Bang Dream", "video": "https://youtu.be/XFv3P-fKhWw", "mp3": null},
+    {"id": 20, "anime": "Song I am. by Roselia", "name": "Bang Dream", "video": "https://naedist.animemusicquiz.com/njc8p5.webm", "mp3": null},
+    {"id": 21, "anime": "Sora no Música by Ave Mujica", "name": "Bang Dream", "video": "https://youtu.be/2Bo-ULStqLo", "mp3": null},
+    {"id": 22, "anime": "Sprechchor by Roselia", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=sdRwP4OjVn4", "mp3": null},
+    {"id": 23, "anime": "Sunlit Musical - Roselia", "name": "Bang Dream", "video": "https://youtu.be/BtG1mA_1e0s", "mp3": null},
+    {"id": 24, "anime": "swim by MyGO!!!!!", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=AEZ7suhPML0", "mp3": null},
+    {"id": 25, "anime": "Symbol III: ▽ by Ave Mujica", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=NB3PxWLn9v4", "mp3": null},
+    {"id": 26, "anime": "Symbol IV :Earth by Ave Mujica", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=WqQPM0dZpXc", "mp3": null},
+    {"id": 27, "anime": "Telepathy by Mugendai Mewtype", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=GN_0T7cClGM", "mp3": null},
+    {"id": 28, "anime": "The Circle of Butterflies by Morfonica x fhána", "name": "Bang Dream", "video": "https://www.youtube.com/watch?v=JfhgKn1hnnk", "mp3": null},
+    {"id": 29, "anime": "Utakotoba by MyGO!!!!!", "name": "Bang Dream", "video": "https://youtu.be/wJ-OebTVyvk", "mp3": null},
+    {"id": 30, "anime": "Yakusoku by Roselia", "name": "Bang Dream", "video": "https://naedist.animemusicquiz.com/h0rza6.webm", "mp3": null},
+] satisfies Song[];

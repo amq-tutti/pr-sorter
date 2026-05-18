@@ -1,0 +1,62 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - "pr-sorter/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-deploy:
+    if: github.ref_name == 'main' || startsWith(github.ref_name, 'pr-sorter/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
+
+      - name: Choose publish directory
+        id: publish
+        shell: bash
+        run: |
+          branch="${GITHUB_REF_NAME}"
+
+          if [[ "$branch" == "main" ]]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          elif [[ "$branch" == pr-sorter/* ]]; then
+            branch="${branch#pr-sorter/}"
+            slug="$(printf '%s' "$branch" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+            echo "dir=$slug" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unsupported branch for GitHub Pages deploy: $branch" >&2
+            exit 1
+          fi
+
+      - name: Deploy branch build
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: dist
+          destination_dir: ${{ steps.publish.outputs.dir }}
+          keep_files: true

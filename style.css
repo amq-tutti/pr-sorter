@@ -1,0 +1,530 @@
+@import "./customize/theme.css";
+
+body {
+  font-family: Arial, sans-serif;
+  background-image: var(--background-image);
+  background-color: #f4f4f9;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  margin: 0;
+  padding: 0;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 30, 60, 0.9);
+  color: white;
+  padding: 30px;
+  width: 400px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.option-group {
+  margin: 20px 0;
+  text-align: left;
+}
+
+.option-group p {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ddd;
+  margin-bottom: 10px;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.option-button {
+  display: inline-block;
+  margin: 5px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background: #1e3a8a;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.option-button.active {
+  background: #2d6a4f;
+  color: #ffffff;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(45, 106, 79, 0.7);
+}
+
+.option-button:hover {
+  background: #3b5998;
+}
+
+.option-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.setting-value {
+  margin: 0 5px 10px;
+  color: #f0fff2;
+  overflow-wrap: anywhere;
+}
+
+.setting-number-input {
+  width: 90px;
+  margin-left: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 5px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  color: #001a3f;
+}
+
+.help-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15em;
+  height: 1.15em;
+  margin-left: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 50%;
+  color: #f0fff2;
+  font-size: 0.75em;
+  line-height: 1;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.help-icon::after {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 1001;
+  width: min(260px, 70vw);
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.92);
+  color: #ffffff;
+  content: attr(data-tooltip);
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  transform: translateX(-50%);
+  transition: opacity 0.15s ease;
+  white-space: normal;
+}
+
+.help-icon:hover::after,
+.help-icon:focus::after {
+  opacity: 1;
+}
+
+.close-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: #7e0000;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.close-button:hover {
+  background: #a14444;
+}
+
+.history-modal {
+  width: min(720px, 90vw);
+  max-height: 80vh;
+  box-sizing: border-box;
+}
+
+.history-empty {
+  color: #f0fff2;
+}
+
+.history-list {
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  text-align: left;
+}
+
+.history-entry {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.history-entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.history-entry__kind {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.history-entry__kind--manual {
+  background: #2d6a4f;
+}
+
+.history-entry__kind--automatic {
+  background: #1e3a8a;
+}
+
+.history-entry__matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.history-song {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(0, 26, 63, 0.35);
+  color: #dbeafe;
+  overflow-wrap: anywhere;
+}
+
+.history-song--picked {
+  border-color: rgba(160, 255, 172, 0.8);
+  background: rgba(45, 106, 79, 0.35);
+}
+
+.history-song__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.history-song__picked {
+  color: #a0ffac;
+  font-weight: bold;
+}
+
+.history-song__anime {
+  color: #a0ffac;
+  font-weight: bold;
+}
+
+.history-song__name {
+  margin-top: 3px;
+  color: #fcffef;
+}
+
+.history-song__score {
+  margin-top: 6px;
+  color: #bbf7d0;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.main-page {
+  height: 100vh;
+  width: 100vw;
+  align-content: center;
+}
+
+.main-page--landing {
+  align-content: start;
+  padding-top: 24px;
+  box-sizing: border-box;
+}
+
+.title {
+  height: 7%;
+  max-width: 70%;
+  font-size: 3vh;
+  padding: 20px;
+  color: #f0fff2;
+  align-content: center;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.button-container {
+  height: 5%;
+  box-sizing: border-box;
+  text-align: center;
+  display: flex;
+  padding: 20px;
+  justify-content: center;
+  flex-direction: row;
+  align-items: center;
+}
+
+.basic-button {
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2vh;
+  padding: 10px 15px;
+  height: 2em;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.basic-button:hover {
+  background-color: #45a049;
+}
+
+.copy-button {
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2vh;
+  min-width: 15%;
+  width: auto;
+  height: 2em;
+  padding: 0 15px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.copy-button:hover {
+  background-color: #45a049;
+}
+
+.duel-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 10%;
+  height: 75%;
+  box-sizing: border-box;
+}
+
+.music-card {
+  padding: 20px;
+  width: 48%;
+  background: rgba(0, 26, 63, 0.6);
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  backdrop-filter: blur(3px);
+}
+
+.music-card .anime {
+  align-content: center;
+  font-size: 2.2vh;
+  color: #a0ffac;
+  height: 10%;
+}
+
+.music-card .song {
+  align-content: center;
+  font-size: 2vh;
+  color: #fcffef;
+  height: 10%;
+}
+
+.score-field {
+  height: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fcffef;
+  font-size: 1.8vh;
+  box-sizing: border-box;
+}
+
+.score-field input {
+  width: 80px;
+  max-width: 45%;
+  height: 70%;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 5px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  color: #001a3f;
+  font-size: 1.8vh;
+}
+
+.music-card button {
+  padding: 10px;
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2.5vh;
+  height: 10%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.music-card button:hover {
+  background-color: #45a049;
+}
+
+.music-card [data-slot="media"] {
+  height: 70%;
+}
+
+.music-card--scored [data-slot="media"] {
+  height: 60%;
+}
+
+.music-card video,
+.music-card iframe,
+.music-card audio {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.music-card audio {
+  width: 70%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.progress {
+  padding: 10px;
+  height: 10%;
+  width: 60%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  background: rgba(0, 26, 63, 0.5);
+  border-radius: 10px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(3px);
+}
+
+.progressbattle {
+  height: 50%;
+  border-radius: 8px;
+  font-size: 3vh;
+  box-sizing: border-box;
+  color: #f0fff2;
+}
+
+.progress-container {
+  width: 100%;
+  height: 50%;
+  background-color: #a9a9a9;
+  border-radius: 10px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #7f9bff, #2975ff);
+  border-radius: 10px;
+  transition: width 0.3s ease-in-out;
+}
+
+.table-container {
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 50, 0.7);
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #003366;
+}
+
+tr:nth-child(even) {
+  background-color: rgba(0, 0, 50, 0.5);
+}
+
+tr:hover {
+  background-color: rgba(0, 0, 50, 0.8);
+}
+
+td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+table th,
+table td {
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 700px) {
+  .history-entry__matchup {
+    grid-template-columns: 1fr;
+  }
+
+  .duel-container {
+    padding: 12px 4%;
+  }
+
+  .music-card {
+    padding: 12px;
+  }
+
+  .music-card--scored [data-slot="media"] {
+    height: 55%;
+  }
+
+  .music-card .anime,
+  .music-card .song,
+  .score-field {
+    font-size: 1.7vh;
+  }
+}
