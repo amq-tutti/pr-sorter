@@ -26,7 +26,7 @@ const cards = sorters.length === 0
   : sorters.map(s => `
     <a class="card" href="./${esc(s.slug)}/">
       <div class="card-header">
-        <img class="card-favicon" src="./${esc(s.slug)}/favicon.ico" alt="" width="20" height="20">
+        <img class="card-favicon" src="./${esc(s.slug)}/favicon.ico" alt="" width="20" height="20" onerror="this.style.display='none'">
         <div class="card-title">${esc(s.title)}</div>
       </div>
       ${s.description ? `<div class="card-desc">${esc(s.description)}</div>` : ''}
