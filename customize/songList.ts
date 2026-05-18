@@ -3,14 +3,130 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {"id": 1, "anime": "0-saiji Start Dash Monogatari Season 2 - Ending 1", "name": "\"Beyond the Trajectory\" by Chata", "video": "https://eudist.animemusicquiz.com/5u2mhk.webm", "mp3": null},
-    {"id": 2, "anime": "1-punkan dake Furete mo Ii yo... Share House no Himitsu Rule. - Ending 1", "name": "\"Session Sadame Night\" by Dai Takanashi", "video": "https://eudist.animemusicquiz.com/f23gq2.webm", "mp3": null},
-    {"id": 3, "anime": "A-Rank Party wo Ridatsu shita Ore wa, Moto Oshiego-tachi to Meikyuu Shinbu wo Mezasu. - Ending 1", "name": "\"Treasure Chest\" by Yuki Tanaka", "video": "https://eudist.animemusicquiz.com/agsvoz.webm", "mp3": "https://eudist.animemusicquiz.com/i3vp9q.mp3"},
-    {"id": 4, "anime": "Akuyaku Reijou Tensei Ojisan - Ending 1", "name": "\"Matsuken Samba II\" by Kazuhiko Inoue, M・A・O", "video": "https://eudist.animemusicquiz.com/e8q47f.webm", "mp3": "https://eudist.animemusicquiz.com/dje0hr.mp3"},
-    {"id": 5, "anime": "Amagami-san Chi no Enmusubi - Ending 2", "name": "\"Kamisama no Iu Toori!\" by ≠ME", "video": "https://eudist.animemusicquiz.com/p4etz1.webm", "mp3": "https://eudist.animemusicquiz.com/wz8z3p.mp3"},
-    {"id": 6, "anime": "Ameku Takao no Suiri Karte - Ending 1", "name": "\"will be fine\" by Gospellers feat. Anly", "video": "https://eudist.animemusicquiz.com/0spf2m.webm", "mp3": "https://eudist.animemusicquiz.com/iagxs7.mp3"},
-    {"id": 7, "anime": "Ao no Exorcist: Yosuga-hen - Ending 1", "name": "\"Overlap\" by Shiyui", "video": "https://eudist.animemusicquiz.com/3z1d8i.webm", "mp3": "https://eudist.animemusicquiz.com/162vdv.mp3"},
-    {"id": 8, "anime": "Ao no Hako - Ending 2", "name": "\"Contrast\" by TOMOO", "video": "https://eudist.animemusicquiz.com/qmcqk3.webm", "mp3": "https://eudist.animemusicquiz.com/l2sgqo.mp3"},
-    {"id": 9, "anime": "Ao no Miburo - Ending 2", "name": "\"Fragment\" by osage", "video": "https://eudist.animemusicquiz.com/8b8iva.webm", "mp3": "https://eudist.animemusicquiz.com/0yt4lm.mp3"},
-    {"id": 10, "anime": "Arafou Otoko no Isekai Tsuuhan - Ending 1", "name": "\"Aicraft\" by Kiminone", "video": "https://eudist.animemusicquiz.com/ohlrpc.webm", "mp3": "https://eudist.animemusicquiz.com/74jbjn.mp3"},
+   {
+        "id": 1,
+        "anime": "SI-VIS: The Sound of Heroes - OP1",
+        "name": "\"So Far Away\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/z6quzx6x0yrlcmcu.webm",
+        "mp3": "https://eudist.animemusicquiz.com/0ndgct.mp3"
+    },
+    {
+        "id": 2,
+        "anime": "SI-VIS: The Sound of Heroes - OP2",
+        "name": "\"Supernova\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/8pk7bcp6xy19pi8c.webm",
+        "mp3": "https://eudist.animemusicquiz.com/jzqof7.mp3"
+    },
+    {
+        "id": 3,
+        "anime": "SI-VIS: The Sound of Heroes - ED1",
+        "name": "\"FRIENDS & SMILE\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/2bniuo1cn2eg1o1n.webm",
+        "mp3": "https://eudist.animemusicquiz.com/56o69s.mp3"
+    },
+    {
+        "id": 4,
+        "anime": "SI-VIS: The Sound of Heroes - ED2",
+        "name": "\"Singing Over\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/rrqceh6l683xbh91.webm",
+        "mp3": "https://eudist.animemusicquiz.com/4m27uq.mp3"
+    },
+    {
+        "id": 5,
+        "anime": "SI-VIS: The Sound of Heroes - ED3",
+        "name": "\"On the Highway\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/3me1nngwark9s19j.webm",
+        "mp3": "https://eudist.animemusicquiz.com/o2gvk8.mp3"
+    },
+    {
+        "id": 6,
+        "anime": "SI-VIS: The Sound of Heroes - ED4",
+        "name": "\"Singing Over -Boys side-\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/ogthqy6s5w6xgclr.webm",
+        "mp3": "https://eudist.animemusicquiz.com/90ydhd.mp3"
+    },
+    {
+        "id": 7,
+        "anime": "SI-VIS: The Sound of Heroes - ED5",
+        "name": "\"Singing Over -Girls side-\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/b3mk7ut4rz56h7xt.webm",
+        "mp3": "https://eudist.animemusicquiz.com/c64r1x.mp3"
+    },
+    {
+        "id": 8,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Arabesque o Kimi ni\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/9uya9usd0an5pvid.webm",
+        "mp3": "https://eudist.animemusicquiz.com/l3o2l0.mp3"
+    },
+    {
+        "id": 9,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Benedictio canticum\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/xdd37rqvpmizn6nl.webm",
+        "mp3": "https://eudist.animemusicquiz.com/gkgnom.mp3"
+    },
+    {
+        "id": 10,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Bless\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/zj3w7z6u17cuqx4q.webm",
+        "mp3": "https://eudist.animemusicquiz.com/lgfgba.mp3"
+    },
+    {
+        "id": 11,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Braver Dreamer\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/r6yjvd37e8fidaqi.webm",
+        "mp3": "https://eudist.animemusicquiz.com/iz5tj1.mp3"
+    },
+    {
+        "id": 12,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Destination of Life\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/kfjvvkcewlwidtyr.webm",
+        "mp3": "https://eudist.animemusicquiz.com/5hfh9g.mp3"
+    },
+    {
+        "id": 13,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Elegy\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/b54jq4hr2qvuaede.webm",
+        "mp3": "https://eudist.animemusicquiz.com/7s7kx5.mp3"
+    },
+    {
+        "id": 14,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"MELODEA\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/uxzyl41s7mo604q1.webm",
+        "mp3": "https://eudist.animemusicquiz.com/mxanwq.mp3"
+    },
+    {
+        "id": 15,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"MISSION\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/f5q2wcenl6l55f0i.webm",
+        "mp3": "https://eudist.animemusicquiz.com/uhikpe.mp3"
+    },
+    {
+        "id": 16,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Protostar\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/u4ul046rs2zzsmvh.webm",
+        "mp3": "https://eudist.animemusicquiz.com/yveoh2.mp3"
+    },
+    {
+        "id": 17,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Romanticist Killer\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/3unj4lkcneo7tq6c.webm",
+        "mp3": "https://eudist.animemusicquiz.com/mh1wjf.mp3"
+    },
+    {
+        "id": 18,
+        "anime": "SI-VIS: The Sound of Heroes - Insert",
+        "name": "\"Trust me\" by SI-VIS",
+        "video": "https://eudist.animemusicquiz.com/3sjgmpke5llclx5p.webm",
+        "mp3": "https://eudist.animemusicquiz.com/umx1tf.mp3"
+    },
 ] satisfies Song[];
