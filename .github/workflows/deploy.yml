@@ -15,12 +15,14 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  deploy-sorter:
+  build-sorter:
     if: github.event_name == 'push' && startsWith(github.ref_name, 'pr-sorter/')
     runs-on: ubuntu-latest
     concurrency:
-      group: pages-${{ github.ref_name }}
+      group: build-${{ github.ref_name }}
       cancel-in-progress: false
+    outputs:
+      slug: ${{ steps.slug.outputs.slug }}
     steps:
       - uses: actions/checkout@v6
 
@@ -48,18 +50,40 @@ jobs:
           node .github/scripts/write-meta.mjs "${{ steps.slug.outputs.slug }}"
           cp customize/favicon.ico dist/favicon.ico
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sorter-${{ steps.slug.outputs.slug }}
+          path: dist/
+          retention-days: 1
+
+  deploy-sorter:
+    needs: build-sorter
+    if: github.event_name == 'push' && startsWith(github.ref_name, 'pr-sorter/')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sorter-${{ needs.build-sorter.outputs.slug }}
+          path: dist/
+
       - name: Deploy sorter
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: dist
-          destination_dir: ${{ steps.slug.outputs.slug }}
+          destination_dir: ${{ needs.build-sorter.outputs.slug }}
           keep_files: true
 
   cleanup-sorter:
     if: github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'pr-sorter/')
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v6
 
