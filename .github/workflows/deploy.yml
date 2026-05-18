@@ -69,16 +69,16 @@ jobs:
         with:
           node-version: 24
 
-      - name: Checkout gh-pages
-        uses: actions/checkout@v6
-        with:
-          ref: gh-pages
-          path: gh-pages-content
-        continue-on-error: true
-
       - name: Generate homepage
         run: |
-          mkdir -p homepage-dist
+          mkdir -p homepage-dist gh-pages-content
+          git fetch origin gh-pages || true
+          if git rev-parse origin/gh-pages >/dev/null 2>&1; then
+            git ls-tree -r origin/gh-pages --name-only | grep '/meta\.json$' | while IFS= read -r f; do
+              mkdir -p "gh-pages-content/$(dirname "$f")"
+              git show "origin/gh-pages:$f" > "gh-pages-content/$f"
+            done
+          fi
           cp customize/favicon.ico homepage-dist/favicon.ico
           node .github/scripts/generate-homepage.mjs gh-pages-content homepage-dist/index.html
 
