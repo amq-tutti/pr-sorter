@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "pr-sorter/**"
+  delete:
   workflow_dispatch:
 
 permissions:
@@ -19,7 +20,7 @@ env:
 
 jobs:
   deploy-sorter:
-    if: startsWith(github.ref_name, 'pr-sorter/')
+    if: github.event_name == 'push' && startsWith(github.ref_name, 'pr-sorter/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -57,12 +58,46 @@ jobs:
           destination_dir: ${{ steps.slug.outputs.slug }}
           keep_files: true
 
+  cleanup-sorter:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'pr-sorter/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute slug
+        id: slug
+        shell: bash
+        run: |
+          branch="${{ github.event.ref }}"
+          branch="${branch#pr-sorter/}"
+          slug="$(printf '%s' "$branch" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+
+      - name: Remove sorter from gh-pages
+        shell: bash
+        run: |
+          git fetch origin gh-pages
+          git worktree add /tmp/gh-pages origin/gh-pages
+          if [ -d "/tmp/gh-pages/${{ steps.slug.outputs.slug }}" ]; then
+            cd /tmp/gh-pages
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+            git rm -rf "${{ steps.slug.outputs.slug }}"
+            git commit -m "Remove sorter: ${{ steps.slug.outputs.slug }}"
+            git push origin HEAD:gh-pages
+          fi
+
   update-homepage:
-    needs: deploy-sorter
+    needs: [deploy-sorter, cleanup-sorter]
     if: |
       always() &&
-      (github.ref_name == 'main' || startsWith(github.ref_name, 'pr-sorter/')) &&
-      (needs.deploy-sorter.result == 'success' || needs.deploy-sorter.result == 'skipped')
+      (
+        (github.event_name == 'push' && (github.ref_name == 'main' || startsWith(github.ref_name, 'pr-sorter/'))) ||
+        (github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'pr-sorter/'))
+      ) &&
+      (needs.deploy-sorter.result == 'success' || needs.deploy-sorter.result == 'skipped') &&
+      (needs.cleanup-sorter.result == 'success' || needs.cleanup-sorter.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
