@@ -74,9 +74,32 @@ export function App({ config, songs }: AppProps) {
   }, [screen, storage]);
 
   function startSort(): void {
+    const writebackConfig = googleWritebackConfig();
+
     if (scoreEnabled) {
       storage.clearScores();
       setScoresBySongId({});
+    }
+
+    if (scoreEnabled && writebackConfig && googleSpreadsheetSelection) {
+      void loadScoresFromGoogleSheet(writebackConfig, googleSpreadsheetSelection, songIds)
+        .then((sheetScores) => {
+          const nextScores = scoresRecordFromSheet(sheetScores);
+          setScoresBySongId(nextScores);
+          storage.saveScores(nextScores);
+          return nextScores;
+        })
+        .catch((error: unknown) => {
+          console.error("Could not reload scores from sheet on start:", error);
+          return {} as SongScoresById;
+        })
+        .then((nextScores) => {
+          const nextSort = resolveAutoSkips(createSort(songs.length), nextScores, settings);
+          setSort(nextSort);
+          setScreen(screenFor(nextSort));
+          storage.saveSort(nextSort);
+        });
+      return;
     }
 
     const nextSort = createSort(songs.length);
@@ -327,13 +350,18 @@ export function App({ config, songs }: AppProps) {
     setConnectingGoogleSheet(true);
     void chooseGoogleSpreadsheet(writebackConfig)
       .then(async (spreadsheet) => {
+        console.log("[chooseSheet] spreadsheet picked:", spreadsheet);
+        console.log("[chooseSheet] scoreEnabled:", scoreEnabled);
         let loadedScoreCount = 0;
         if (scoreEnabled) {
           const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
+          console.log("[chooseSheet] sheetScores from API:", sheetScores);
           const nextScores = scoresRecordFromSheet(sheetScores);
+          console.log("[chooseSheet] nextScores to save:", nextScores);
           loadedScoreCount = Object.keys(nextScores).length;
           setScoresBySongId(nextScores);
           storage.saveScores(nextScores);
+          console.log("[chooseSheet] saved", loadedScoreCount, "scores to localStorage");
         }
 
         setGoogleSpreadsheetSelection(spreadsheet);

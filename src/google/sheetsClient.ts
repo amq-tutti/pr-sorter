@@ -206,12 +206,16 @@ function buildUpdates(
 }
 
 function readScores(values: string[][], songIds: number[], scoreColumnHeader: string): Map<number, string> {
+  console.log("[readScores] raw sheet values:", values);
+  console.log("[readScores] looking for score column header:", JSON.stringify(scoreColumnHeader));
   const headerRow = values[0];
   if (!headerRow || headerRow.length === 0) {
     throw new GoogleWritebackError("Sheet is empty or missing a header row.");
   }
+  console.log("[readScores] header row:", headerRow);
 
   const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
+  console.log("[readScores] score column index(es) found:", scoreHeaderIndexes);
   if (scoreHeaderIndexes.length === 0) {
     throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" was not found.`);
   }
