@@ -25,7 +25,10 @@ const cards = sorters.length === 0
   ? `<p class="empty">No sorters available yet.</p>`
   : sorters.map(s => `
     <a class="card" href="./${esc(s.slug)}/">
-      <div class="card-title">${esc(s.title)}</div>
+      <div class="card-header">
+        <img class="card-favicon" src="./${esc(s.slug)}/favicon.ico" alt="" width="20" height="20">
+        <div class="card-title">${esc(s.title)}</div>
+      </div>
       ${s.description ? `<div class="card-desc">${esc(s.description)}</div>` : ''}
     </a>`).join('');
 
@@ -95,11 +98,20 @@ const html = `<!DOCTYPE html>
       background: rgba(0, 40, 90, 0.8);
       transform: translateY(-2px);
     }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .card-favicon {
+      flex-shrink: 0;
+      border-radius: 3px;
+    }
     .card-title {
       font-size: 1.1rem;
       font-weight: bold;
       color: #a0ffac;
-      margin-bottom: 6px;
     }
     .card-desc {
       font-size: 0.9rem;
