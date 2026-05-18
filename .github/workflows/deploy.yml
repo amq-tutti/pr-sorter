@@ -18,8 +18,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-and-deploy:
-    if: github.ref_name == 'main' || startsWith(github.ref_name, 'pr-sorter/')
+  deploy-sorter:
+    if: startsWith(github.ref_name, 'pr-sorter/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -35,28 +35,57 @@ jobs:
         env:
           VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
 
-      - name: Choose publish directory
-        id: publish
+      - name: Compute slug
+        id: slug
         shell: bash
         run: |
-          branch="${GITHUB_REF_NAME}"
+          branch="${GITHUB_REF_NAME#pr-sorter/}"
+          slug="$(printf '%s' "$branch" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
 
-          if [[ "$branch" == "main" ]]; then
-            echo "dir=." >> "$GITHUB_OUTPUT"
-          elif [[ "$branch" == pr-sorter/* ]]; then
-            branch="${branch#pr-sorter/}"
-            slug="$(printf '%s' "$branch" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
-            echo "dir=$slug" >> "$GITHUB_OUTPUT"
-          else
-            echo "Unsupported branch for GitHub Pages deploy: $branch" >&2
-            exit 1
-          fi
+      - name: Write meta.json
+        run: node .github/scripts/write-meta.mjs "${{ steps.slug.outputs.slug }}"
 
-      - name: Deploy branch build
+      - name: Deploy sorter
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: dist
-          destination_dir: ${{ steps.publish.outputs.dir }}
+          destination_dir: ${{ steps.slug.outputs.slug }}
+          keep_files: true
+
+  update-homepage:
+    needs: deploy-sorter
+    if: |
+      always() &&
+      (github.ref_name == 'main' || startsWith(github.ref_name, 'pr-sorter/')) &&
+      (needs.deploy-sorter.result == 'success' || needs.deploy-sorter.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages-content
+        continue-on-error: true
+
+      - name: Generate homepage
+        run: |
+          mkdir -p homepage-dist
+          node .github/scripts/generate-homepage.mjs gh-pages-content homepage-dist/index.html
+
+      - name: Deploy homepage
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: homepage-dist
+          destination_dir: .
           keep_files: true
