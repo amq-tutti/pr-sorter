@@ -10,6 +10,7 @@ export type GoogleSheetsConfig = {
   appId: string;
   rankColumnHeader: string;
   scoreColumnHeader?: string;
+  allowCustomScoreColumn?: boolean;
 };
 
 export type GoogleSpreadsheetSelection = {

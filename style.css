@@ -36,6 +36,54 @@ body {
   z-index: 999;
 }
 
+.modal-overlay--dark {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.modal--pair-left {
+  left: calc(50% - 210px);
+}
+
+.modal--pair-right {
+  left: calc(50% + 210px);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modal-actions__button {
+  flex: 1;
+  max-width: 160px;
+  margin: 0;
+}
+
+.option-button.modal-actions__button--cancel {
+  background: #7e0000;
+}
+
+.option-button.modal-actions__button--cancel:hover {
+  background: #a14444;
+}
+
+.score-column-modal .option-group {
+  text-align: center;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 0;
+  cursor: pointer;
+  color: #f0fff2;
+  font-size: 15px;
+}
+
 .option-group {
   margin: 20px 0;
   text-align: left;
@@ -95,6 +143,17 @@ body {
   color: #001a3f;
 }
 
+.setting-text-input {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 5px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  color: #001a3f;
+}
+
 .help-icon {
   position: relative;
   display: inline-flex;
@@ -137,6 +196,13 @@ body {
 .help-icon:hover::after,
 .help-icon:focus::after {
   opacity: 1;
+}
+
+.help-icon--right::after {
+  left: calc(100% + 8px);
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .close-button {

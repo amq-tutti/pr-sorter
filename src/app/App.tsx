@@ -20,6 +20,7 @@ import { Duel } from "./components/Duel";
 import { HistoryModal } from "./components/HistoryModal";
 import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
+import { ScoreColumnModal } from "./components/ScoreColumnModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { isScoreEnabled, normalizeScore } from "./internal/songScores";
 import { createStorage } from "./storage";
@@ -41,7 +42,6 @@ const screenFor = (sort: SortState | null): Screen => {
 export function App({ config, songs }: AppProps) {
   const songIds = useMemo(() => songs.map((song) => song.id), [songs]);
   const storage = useMemo(() => createStorage(config, songIds), [config, songIds]);
-  const scoreEnabled = isScoreEnabled(config);
   const [screen, setScreen] = useState<Screen>("landing");
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
   const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
@@ -53,6 +53,14 @@ export function App({ config, songs }: AppProps) {
   const [googleSpreadsheetSelection, setGoogleSpreadsheetSelection] = useState<GoogleSpreadsheetSelection | null>(() =>
     storage.loadGoogleSpreadsheetSelection(),
   );
+  const [customScoreColumnHeader, setCustomScoreColumnHeader] = useState<string | null>(
+    () => storage.loadCustomScoreColumnHeader(),
+  );
+  const [isScoreColumnModalOpen, setScoreColumnModalOpen] = useState(false);
+  const [pendingSheetPick, setPendingSheetPick] = useState(false);
+
+  const scoreEnabled = isScoreEnabled(config) ||
+    Boolean(config.googleSheets?.allowCustomScoreColumn && customScoreColumnHeader);
 
   useEffect(() => {
     document.title = config.title;
@@ -258,7 +266,7 @@ export function App({ config, songs }: AppProps) {
     });
   }
 
-  function googleWritebackConfig() {
+  function googleWritebackConfig(overrideCustomScoreColumn?: string) {
     const googleSheets = config.googleSheets;
     const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
 
@@ -270,6 +278,7 @@ export function App({ config, songs }: AppProps) {
       ...googleSheets,
       apiKey,
       tokenStorageKey: `${config.localStoragePrefix}:google-oauth-access-token`,
+      scoreColumnHeader: googleSheets.scoreColumnHeader ?? overrideCustomScoreColumn ?? customScoreColumnHeader ?? undefined,
     };
   }
 
@@ -347,21 +356,37 @@ export function App({ config, songs }: AppProps) {
       return;
     }
 
+    if (config.googleSheets?.allowCustomScoreColumn && !config.googleSheets.scoreColumnHeader) {
+      setCustomScoreColumnHeader(null);
+      storage.clearCustomScoreColumnHeader();
+      storage.clearScores();
+      setScoresBySongId({});
+      setPendingSheetPick(true);
+      setSettingsOpen(false);
+      setScoreColumnModalOpen(true);
+      return;
+    }
+
+    proceedWithChooseSheet();
+  }
+
+  function proceedWithChooseSheet(effectiveCustomColumn?: string): void {
+    const writebackConfig = googleWritebackConfig(effectiveCustomColumn);
+    if (!writebackConfig) {
+      return;
+    }
+
+    const effectiveScoreEnabled = isScoreEnabled(config) ||
+      Boolean(config.googleSheets?.allowCustomScoreColumn && effectiveCustomColumn);
+
     setConnectingGoogleSheet(true);
     void chooseGoogleSpreadsheet(writebackConfig)
       .then(async (spreadsheet) => {
-        console.log("[chooseSheet] spreadsheet picked:", spreadsheet);
-        console.log("[chooseSheet] scoreEnabled:", scoreEnabled);
-        let loadedScoreCount = 0;
-        if (scoreEnabled) {
+        if (effectiveScoreEnabled) {
           const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
-          console.log("[chooseSheet] sheetScores from API:", sheetScores);
           const nextScores = scoresRecordFromSheet(sheetScores);
-          console.log("[chooseSheet] nextScores to save:", nextScores);
-          loadedScoreCount = Object.keys(nextScores).length;
           setScoresBySongId(nextScores);
           storage.saveScores(nextScores);
-          console.log("[chooseSheet] saved", loadedScoreCount, "scores to localStorage");
         }
 
         setGoogleSpreadsheetSelection(spreadsheet);
@@ -380,9 +405,37 @@ export function App({ config, songs }: AppProps) {
       });
   }
 
+  function handleScoreColumnConfirm(header: string | null): void {
+    setScoreColumnModalOpen(false);
+    if (header) {
+      setCustomScoreColumnHeader(header);
+      storage.saveCustomScoreColumnHeader(header);
+    } else {
+      setCustomScoreColumnHeader(null);
+      storage.clearCustomScoreColumnHeader();
+    }
+    setSettingsOpen(true);
+    if (pendingSheetPick) {
+      setPendingSheetPick(false);
+      proceedWithChooseSheet(header ?? undefined);
+    }
+  }
+
+  function handleScoreColumnCancel(): void {
+    setScoreColumnModalOpen(false);
+    setPendingSheetPick(false);
+    setSettingsOpen(true);
+  }
+
   function clearSheetSelection(): void {
     setGoogleSpreadsheetSelection(null);
     storage.clearGoogleSpreadsheetSelection();
+    if (config.googleSheets?.allowCustomScoreColumn) {
+      setCustomScoreColumnHeader(null);
+      storage.clearCustomScoreColumnHeader();
+      storage.clearScores();
+      setScoresBySongId({});
+    }
   }
 
   const googleSheetsDisabledReason = config.googleSheets && !import.meta.env.VITE_GOOGLE_API_KEY
@@ -413,10 +466,13 @@ export function App({ config, songs }: AppProps) {
         googleSheetsDisabledReason={googleSheetsDisabledReason}
         googleSpreadsheetSelection={googleSpreadsheetSelection}
         isConnectingGoogleSheet={isConnectingGoogleSheet}
+        allowCustomScoreColumn={Boolean(config.googleSheets?.allowCustomScoreColumn)}
+        customScoreColumnHeader={customScoreColumnHeader}
         onClose={() => setSettingsOpen(false)}
         onChange={updateSettings}
         onChooseGoogleSheet={chooseSheet}
         onClearGoogleSheet={clearSheetSelection}
+        onEditCustomScoreColumn={() => { setSettingsOpen(false); setScoreColumnModalOpen(true); }}
       />
       <HistoryModal
         open={isHistoryOpen}
@@ -424,6 +480,13 @@ export function App({ config, songs }: AppProps) {
         songs={songs}
         scoresBySongId={scoresBySongId}
         onClose={() => setHistoryOpen(false)}
+      />
+      <ScoreColumnModal
+        open={isScoreColumnModalOpen}
+        initialHeader={customScoreColumnHeader}
+        isPicking={pendingSheetPick}
+        onConfirm={handleScoreColumnConfirm}
+        onCancel={handleScoreColumnCancel}
       />
       <div className={`main-page ${screen === "landing" ? "main-page--landing" : ""}`}>
         {screen !== "sorting" ? (

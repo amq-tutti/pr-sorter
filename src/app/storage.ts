@@ -15,6 +15,9 @@ type StorageFacade = {
   loadGoogleSpreadsheetSelection(): GoogleSpreadsheetSelection | null;
   saveGoogleSpreadsheetSelection(selection: GoogleSpreadsheetSelection): void;
   clearGoogleSpreadsheetSelection(): void;
+  loadCustomScoreColumnHeader(): string | null;
+  saveCustomScoreColumnHeader(header: string): void;
+  clearCustomScoreColumnHeader(): void;
 };
 
 const settingsSchema = z.object({
@@ -30,12 +33,15 @@ const googleSpreadsheetSelectionSchema = z.object({
   name: z.string().min(1),
 });
 
+const customScoreColumnHeaderSchema = z.string().min(1);
+
 export function createStorage(config: AppConfig, songIds: number[]): StorageFacade {
   const sortKey = `${config.localStoragePrefix}:sort`;
   const scoresKey = `${config.localStoragePrefix}:scores`;
   const settingsKey = `${config.localStoragePrefix}:settings`;
   const googleSpreadsheetSelectionKey = `${config.localStoragePrefix}:google-spreadsheet-selection`;
-  const scoreEnabled = isScoreEnabled(config);
+  const customScoreColumnHeaderKey = `${config.localStoragePrefix}:custom-score-column-header`;
+  const scoreEnabled = isScoreEnabled(config) || Boolean(config.googleSheets?.allowCustomScoreColumn);
   const currentSongIds = new Set(songIds);
   const songCount = songIds.length;
 
@@ -162,6 +168,24 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
     localStorage.removeItem(googleSpreadsheetSelectionKey);
   }
 
+  function loadCustomScoreColumnHeader(): string | null {
+    const raw = localStorage.getItem(customScoreColumnHeaderKey);
+    if (!raw) {
+      return null;
+    }
+
+    const result = customScoreColumnHeaderSchema.safeParse(raw);
+    return result.success ? result.data : null;
+  }
+
+  function saveCustomScoreColumnHeader(header: string): void {
+    localStorage.setItem(customScoreColumnHeaderKey, header);
+  }
+
+  function clearCustomScoreColumnHeader(): void {
+    localStorage.removeItem(customScoreColumnHeaderKey);
+  }
+
   return {
     loadSort,
     saveSort,
@@ -173,5 +197,8 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
     loadGoogleSpreadsheetSelection,
     saveGoogleSpreadsheetSelection,
     clearGoogleSpreadsheetSelection,
+    loadCustomScoreColumnHeader,
+    saveCustomScoreColumnHeader,
+    clearCustomScoreColumnHeader,
   };
 }
