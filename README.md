@@ -11,7 +11,7 @@ For a normal fork, only edit:
 
 ## Project Structure
 
-```
+```text
 party-ranking-sorter-template/
 ├── index.html
 ├── style.css
@@ -48,6 +48,7 @@ To set up a custom sorter for your specific party ranking, follow these steps:
    - Regex because I'm lazy:
    `(\d+)\t(.+)?\t(.+)\t\t(.+)\n?` to `{"id": $1, "anime": "$2", "name": "$3", "video": "$4", "mp3": null },\n`
    - Example:
+
      ```typescript
      import type { Song } from "../src/songs";
 
@@ -81,6 +82,7 @@ To set up a custom sorter for your specific party ranking, follow these steps:
    - Open `customize/config.ts` and change the `title` and `description` values to match your custom sorter.
    - Also you **will** have to change `localStoragePrefix` if you plan on hosting multiple github-pages from a single account (there is an issue of shared `localStorage` if base URL is the same, so need to differentiate `localStorage` for different party rankings)
    - Example:
+
      ```typescript
      export const config = {
          localStoragePrefix: "your-party-rank-sorter",
@@ -147,6 +149,7 @@ The sorter can write completed ranks directly into a locally saved Google Spread
 To enable it:
 
 1. Add `googleSheets` to `customize/config.ts`:
+
    ```ts
    googleSheets: {
      clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
@@ -155,10 +158,13 @@ To enable it:
      scoreColumnHeader: "Score (optional)",
    }
    ```
+
 2. Set the Picker API key through Vite, for example in a local `.env.local` file:
+
    ```bash
    VITE_GOOGLE_API_KEY=your-browser-api-key
    ```
+
 3. Configure Google Cloud:
    - Enable Google Picker API.
    - Enable Google Drive API.
