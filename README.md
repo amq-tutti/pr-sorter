@@ -114,6 +114,32 @@ When enabled, each song can have a score from `0` to `10`. Blank scores are allo
 
 Settings includes `Auto-skip score gap`, defaulting to `10`. During sorting, if both compared songs have valid scores and their absolute score difference is greater than or equal to this setting, the higher-scored song is picked automatically. Equal scores and missing scores never auto-skip. For example, `10` only skips comparisons such as `10` vs `0`, while `7` skips `10` vs `3`.
 
+## User-Defined Score Column
+
+If the shared sheet was not set up with a score column but you still want users to be able to add their own scores, set `allowCustomScoreColumn: true` and omit `scoreColumnHeader`:
+
+```ts
+googleSheets: {
+  clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+  appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
+  rankColumnHeader: "Rank",
+  allowCustomScoreColumn: true,
+}
+```
+
+With this enabled, when a user clicks `Choose Sheet` in Settings, they are first asked whether they have added a personal score column to the sheet and, if so, what its header is. That name is saved locally. From that point on, the sorter behaves identically to having `scoreColumnHeader` set: scores are imported from the sheet on sort start, score fields are shown during sorting, auto-skip is available, and scores are written back together with ranks at the end.
+
+If `scoreColumnHeader` is set at the config level, `allowCustomScoreColumn` has no effect — the config-level header takes priority and the column prompt is never shown.
+
+User flow:
+
+1. User adds a score column to the shared spreadsheet themselves.
+2. Open Settings → click `Choose Sheet`.
+3. A prompt asks whether the sheet has a score column. The user selects yes and enters the column header exactly as it appears in the sheet.
+4. The sheet picker opens. After picking, scores are imported immediately.
+5. The column name is shown under `Score column` in Settings and can be edited at any time.
+6. Disconnecting the sheet (Forget Sheet) also clears the saved column name.
+
 ## Google Sheets Writeback
 
 The sorter can write completed ranks directly into a locally saved Google Spreadsheet selection. This is browser-only and stores the Google OAuth access token in `localStorage` so users can keep writing after refreshes without repeating OAuth until Google rejects or expires the token. The selected spreadsheet ID and display name are also saved locally so users can pick the sheet once in Settings.
@@ -165,10 +191,21 @@ Refreshing the page keeps both the selected spreadsheet and the stored OAuth acc
 
 ## Development
 
-Install dependencies and run the Vite build:
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Start the local dev server:
+
+```bash
+npm run dev
+```
+
+Build for production:
+
+```bash
 npm run build
 ```
 
