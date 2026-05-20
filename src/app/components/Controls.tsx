@@ -3,6 +3,7 @@ import type { SavedProgressKind, Screen } from "../types";
 type ControlsProps = {
   screen: Screen;
   savedKind: SavedProgressKind;
+  scoreEnabled: boolean;
   googleSheetsEnabled: boolean;
   googleSheetsDisabledReason: string | null;
   googleSheetsSetupReason: string | null;
@@ -12,6 +13,7 @@ type ControlsProps = {
   onStart(): void;
   onLoad(): void;
   onUndo(): void;
+  onCopyScores(): void;
   onCopyRanks(): void;
   onWriteRanksToSheet(): void;
   onSetupGoogleSheet(): void;
@@ -20,6 +22,7 @@ type ControlsProps = {
 export function Controls({
   screen,
   savedKind,
+  scoreEnabled,
   googleSheetsEnabled,
   googleSheetsDisabledReason,
   googleSheetsSetupReason,
@@ -29,6 +32,7 @@ export function Controls({
   onStart,
   onLoad,
   onUndo,
+  onCopyScores,
   onCopyRanks,
   onWriteRanksToSheet,
   onSetupGoogleSheet,
@@ -61,6 +65,11 @@ export function Controls({
       {screen === "complete" ? (
         <button className="copy-button" type="button" onClick={onCopyRanks}>
           Copy ranks to clipboard
+        </button>
+      ) : null}
+      {screen === "complete" && scoreEnabled ? (
+        <button className="copy-button" type="button" onClick={onCopyScores}>
+          Copy scores to clipboard
         </button>
       ) : null}
       {screen === "complete" && googleSheetsEnabled ? (
