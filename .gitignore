@@ -3,3 +3,4 @@ dist/
 .vite/
 .idea/
 .env.local
+scripts/
