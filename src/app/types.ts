@@ -10,6 +10,7 @@ export type GoogleSheetsConfig = {
   clientId: string;
   appId: string;
   rankColumnHeader: string;
+  allowCustomScoreColumn?: boolean;
   scoreColumnHeader?: string;
 };
 
