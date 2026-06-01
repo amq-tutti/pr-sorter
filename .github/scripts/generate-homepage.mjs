@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 
 const ghPagesDir = process.argv[2] ?? 'gh-pages-content';
 const outputFile = process.argv[3] ?? 'homepage-dist/index.html';
@@ -247,3 +247,12 @@ const html = `<!DOCTYPE html>
 
 writeFileSync(outputFile, html);
 console.log(`Homepage generated with ${sorters.length} sorter(s) → ${outputFile}`);
+
+const indexEntries = sorters.map(s => {
+  const entry = { slug: s.slug, title: s.title, description: s.description };
+  if (s.category) entry.category = s.category;
+  return entry;
+});
+const indexFile = join(dirname(outputFile), 'sorter-index.json');
+writeFileSync(indexFile, JSON.stringify({ sorters: indexEntries }, null, 2));
+console.log(`sorter-index.json written → ${indexFile}`);
