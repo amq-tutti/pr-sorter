@@ -135,7 +135,14 @@
   <div class="surface">
     <h1>Sorter Collection</h1>
     <p class="subtitle">Pick a sorter to get started.</p>
-    <div class="grid">
+    <div class="chips-bar">
+      <button class="chip active" data-filter="__all__">All</button>
+      <button class="chip" data-filter="Nominations">Nominations</button>
+    </div>
+    <div id="sections">
+      <div class="section" data-section="Nominations">
+        <h2 class="section-heading">Nominations</h2>
+        <div class="grid">
       <a class="card" href="./2015/">
         <div class="card-header">
           <img class="card-favicon" src="./2015/favicon.ico" alt="" width="20" height="20">
@@ -143,6 +150,10 @@
         </div>
         <div class="card-desc">Party rank sorter for nominated anime songs from 2015</div>
       </a>
+        </div>
+      </div>
+      <div class="section" data-section="__uncategorized__">
+        <div class="grid">
       <a class="card" href="./2026-spring-eds/">
         <div class="card-header">
           <img class="card-favicon" src="./2026-spring-eds/favicon.ico" alt="" width="20" height="20">
@@ -192,7 +203,34 @@
         </div>
         <div class="card-desc">Party rank sorter for SI-VIS anime songs</div>
       </a>
+        </div>
+      </div>
     </div>
   </div>
+  <script>
+    const chips = document.querySelectorAll('.chip');
+    const sections = document.querySelectorAll('.section');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const filter = chip.dataset.filter;
+        sections.forEach(section => {
+          if (filter === '__all__') {
+            section.hidden = false;
+            const h = section.querySelector('.section-heading');
+            if (h) h.hidden = false;
+          } else {
+            const match = section.dataset.section === filter;
+            section.hidden = !match;
+            if (match) {
+              const h = section.querySelector('.section-heading');
+              if (h) h.hidden = true;
+            }
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
