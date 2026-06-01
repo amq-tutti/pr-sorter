@@ -357,7 +357,7 @@ export const songList = [
         "id": 51,
         "anime": "Pokemon: Wonder Voyage - Opening 1",
         "name": "\"Sekai Tsunagare\" by Minori Suzuki & Yuka Terasaki",
-        "video": "https://files.catbox.moe/rdsqa2.mp4",
+        "video": "https://nawdist.animemusicquiz.com/y0i7w0.webm",
         "mp3": "https://files.catbox.moe/7b7j4n.mp3"
     },
     {
