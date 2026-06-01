@@ -64,6 +64,7 @@ if (sorters.length === 0) {
 
   const uncategorizedSection = uncategorized.length > 0 ? `
       <div class="section" data-section="__uncategorized__">
+        <h2 class="section-heading">Uncategorized</h2>
         <div class="grid">${uncategorized.map(cardHtml).join('')}
         </div>
       </div>` : '';
