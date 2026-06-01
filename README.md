@@ -1,114 +1,200 @@
 # Party Ranking Sorter
 
-This project is a simple single-page application template that allows users to rank songs from a list by comparing them in duels.
+This project is a single-page application template for ranking songs by comparing them in duels.
 
-## Customize A Fork
+## Features
 
-For a normal fork, only edit:
+- Autosave to local storage after each duel.
+- Resume a saved sort or show final results if a sorter was already completed.
+- Sort using mp3, video, or full-song files.
+- Region selection for AnimeMusicQuiz CDN links (EU, NA West, NA East).
+- Optional Google Sheets import for generating local customize files.
+- Optional Google Sheets writeback for completed ranks.
+- Optional per-song scores from `0` to `10`, with score-based auto-skip.
+- GitHub Pages workflow that publishes each `pr-sorter/*` branch as its own sorter.
+
+## 1. Clone And Install
+
+Fork or clone the repository, then install dependencies with Node `24` or newer:
+
+```bash
+nvm use 24
+npm ci
+```
+
+If you do not use `nvm`, install Node `24` or newer before running the npm commands.
+
+Start the local Vite dev server:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173/`.
+
+For a normal custom sorter, the files you usually edit are:
+
+- `customize/config.ts`
+- `customize/songList.ts`
+- `customize/favicon.ico`
+
+## 2. Configure The Sorter
+
+Update `customize/config.ts` with the title, description, and a unique `localStoragePrefix`:
+
+```ts
+import type { AppConfig } from "../src/app/types";
+
+export const config = {
+  localStoragePrefix: "your-party-rank-sorter",
+  title: "Your Custom Party Rank Sorter",
+  description: "Party rank sorter for your custom list of songs.",
+} satisfies AppConfig;
+```
+
+Change `localStoragePrefix` for each hosted sorter. Browser storage is shared by origin, so two sorters hosted under the same GitHub Pages site can collide if they use the same prefix.
+
+Replace `customize/favicon.ico` if you want a custom browser icon.
+
+## 3. Add Songs
+
+Replace `customize/songList.ts` with your song list. Each song needs an `id`, `anime`, `name`, and at least one playable media URL in `video`, `mp3`, or `full`.
+
+For larger lists, the faster option is to import from Google Sheets after completing the optional Google setup in step 6.
+
+Links can be AnimeMusicQuiz CDN links, Catbox links, YouTube links, or another browser-playable `https` media URL.
+
+```ts
+import type { Song } from "../src/songs";
+
+export const songList = [
+  {
+    id: 1,
+    anime: "Your Anime Title",
+    name: "Your Song Name",
+    video: "https://your-video-url.example/song.webm",
+    mp3: "https://your-audio-url.example/song.mp3",
+    full: "https://your-full-song-url.example/song.mp3",
+  },
+  {
+    id: 2,
+    anime: "Another Anime Title",
+    name: "Another Song Name",
+    video: "https://www.youtube.com/watch?v=example",
+    mp3: null,
+  },
+] satisfies Song[];
+```
+
+`anime` may be `null` if you do not want a separate anime/show label. Use positive integer IDs and keep them unique.
+
+## 4. Optional: Set Up Google
+
+Google setup is only needed if you want to import songs from Google Sheets or write completed ranks back to Google Sheets.
+
+In [Google Cloud Console](https://console.cloud.google.com/):
+
+1. [Create or select a Google Cloud project](https://console.cloud.google.com/projectselector2/home/dashboard).
+2. [Enable Google Picker API](https://console.cloud.google.com/apis/library/picker.googleapis.com).
+3. [Enable Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com).
+4. [Enable Google Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com).
+5. [Configure an OAuth consent screen](https://console.cloud.google.com/auth/overview).
+6. Add the OAuth scope [`https://www.googleapis.com/auth/drive.file`](https://developers.google.com/identity/protocols/oauth2/scopes#drive).
+7. [Create an OAuth web client ID](https://console.cloud.google.com/auth/clients/create).
+8. [Create a browser API key](https://console.cloud.google.com/apis/credentials) for Picker.
+
+For local development, add `http://localhost:5173` to the OAuth client's authorized JavaScript origins.
+
+For GitHub Pages, add your Pages origin, for example `https://YOUR_USERNAME.github.io`, to the OAuth client's authorized JavaScript origins. Restrict the API key by HTTP referrer, for example:
+
+```text
+http://localhost:5173/*
+https://YOUR_USERNAME.github.io/*
+```
+
+Use the minimum Google permissions needed by this app:
+
+- OAuth consent screen scope: `https://www.googleapis.com/auth/drive.file`
+- Enabled APIs: Google Picker API, Google Drive API, and Google Sheets API
+- API key application restriction: HTTP referrers for your local and deployed origins
+- API key API restriction: Google Picker API and Google Drive API
+
+If you use GitHub Pages deployment, also add the browser API key to your GitHub repository as a repository variable:
+
+1. Open your GitHub repository.
+2. Go to `Settings` -> `Secrets and variables` -> `Actions`.
+3. Open the `Variables` tab.
+4. Click `New repository variable`.
+5. Set `Name` to `VITE_GOOGLE_API_KEY`.
+6. Set `Value` to your Google browser API key.
+7. Save the variable.
+
+GitHub repository variables do not have OAuth scopes. The minimum Google OAuth scope is the `drive.file` scope listed above, and the browser API key should be limited with the HTTP referrer and API restrictions listed above.
+
+## 5. Optional: Configure Google In The App
+
+Add `googleSheets` to `customize/config.ts`:
+
+```ts
+import type { AppConfig } from "../src/app/types";
+
+export const config = {
+  localStoragePrefix: "your-party-rank-sorter",
+  title: "Your Custom Party Rank Sorter",
+  description: "Party rank sorter for your custom list of songs.",
+  googleSheets: {
+    clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
+    rankColumnHeader: "Rank",
+    scoreColumnHeader: "Score (optional)",
+  },
+} satisfies AppConfig;
+```
+
+Then create `.env.local` in the repository root:
+
+```bash
+VITE_GOOGLE_API_KEY=your-browser-api-key
+```
+
+`.env.local` is intentionally ignored by git, so each local clone needs its own copy.
+
+Omit `googleSheets` if you do not need Google features. Omit only `scoreColumnHeader` if you want Google rank writeback but do not want score support.
+
+## 6. Optional: Import Songs From Google Sheets
+
+After Google is configured, start the dev server:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173/import`, select a Google Sheet, preview the parsed rows, and click `Write customize files`.
+
+The import page writes:
 
 - `customize/config.ts`
 - `customize/songList.ts`
 
-## Project Structure
+The importer reads the first non-hidden grid worksheet. It looks for the first row containing an `ID` header, then auto-detects common column names and lets you map missing columns manually.
 
-```text
-party-ranking-sorter-template/
-├── index.html
-├── style.css
-├── public/
-│   └── favicon.ico
-├── customize/
-│   ├── config.ts
-│   └── songList.ts
-├── src/
-│   ├── main.tsx
-│   └── ...
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-```
+Required columns:
 
-## Features
+- `ID`
+- song name, such as `Song`, `Song Name`, `Title`, or `Song Info`
+- rank column, such as `Rank`
+- at least one media column, such as `Video`, `Video Link`, `mp3 Links`, `MP3`, `Full`, or `Full Link`
 
-- Autosave to the local storage after each duel.
-- Can load saved result or show final result if sorter was previously completed.
-- Options for choosing between mp3, video, and full-song files when sorting.
-- Region selection for AnimeMusicQuiz CDN links (EU, NA West, NA East).
-- Optional Google Sheets writeback for completed ranks.
-- Optional per-song scores from `0` to `10`, with score-based auto-skip.
+Optional columns:
 
-## Setting Up a Custom Sorter
+- anime/show name, such as `Anime Name`, `Anime`, `Series`, or `Show`
+- score, such as `Score (optional)` or `Score`
 
-To set up a custom sorter for your specific party ranking, follow these steps:
+Media URLs can be stored as cell hyperlinks or as plain `http`/`https` cell text.
 
-1. **Update `customize/songList.ts`:**
-   - Replace the content of `customize/songList.ts` with your own list of songs. Each song should have an `id`, `anime`, `name`, `video`, `mp3`, and optional `full` field.
-   - Links should be either animemusicquiz catbox links or YouTube links.
-   - Regex because I'm lazy:
-   `(\d+)\t(.+)?\t(.+)\t\t(.+)\n?` to `{"id": $1, "anime": "$2", "name": "$3", "video": "$4", "mp3": null },\n`
-   - Example:
+## 7. Optional: Use Song Scores
 
-     ```typescript
-     import type { Song } from "../src/songs";
-
-     export const songList = [
-         {
-             "id": 1,
-             "anime": "Your Anime Title",
-             "name": "Your Song Name",
-             "video": "https://your-video-url.com",
-             "mp3": "https://your-mp3-url.com",
-             "full": "https://your-full-song-url.com"
-         },
-         {
-             "id": 2,
-             "anime": "Another Anime Title",
-             "name": "Another Song Name",
-             "video": "https://another-video-url.com",
-             "mp3": "https://another-mp3-url.com"
-         },
-         {
-             "id": 3,
-             "anime": "Example Anime",
-             "name": "Example Song",
-             "video": "https://eudist.animemusicquiz.com/example.webm",
-             "mp3": "https://eudist.animemusicquiz.com/example.mp3"
-         }
-     ] satisfies Song[];
-     ```
-
-2. **Update the Title and Description in `customize/config.ts`:**
-   - Open `customize/config.ts` and change the `title` and `description` values to match your custom sorter.
-   - Also you **will** have to change `localStoragePrefix` if you plan on hosting multiple github-pages from a single account (there is an issue of shared `localStorage` if base URL is the same, so need to differentiate `localStorage` for different party rankings)
-   - Example:
-
-     ```typescript
-     export const config = {
-         localStoragePrefix: "your-party-rank-sorter",
-         title: "Your Custom Party Rank Sorter",
-         description: "Party rank sorter for your custom list of songs.",
-         googleSheets: {
-             clientId: "575550662002-....apps.googleusercontent.com",
-             appId: "575550662002",
-             rankColumnHeader: "rank",
-             scoreColumnHeader: "Score (optional)"
-         }
-     };
-     ```
-
-## Optional Song Scores
-
-Scores are opt-in. Add `googleSheets.scoreColumnHeader` to `customize/config.ts` to enable score inputs, score persistence, score results, the auto-skip setting, and score writeback:
-
-```ts
-googleSheets: {
-  clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
-  appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
-  rankColumnHeader: "rank",
-  scoreColumnHeader: "Score (optional)",
-}
-```
+Scores are enabled by `googleSheets.scoreColumnHeader` in `customize/config.ts`.
 
 If `scoreColumnHeader` is omitted, the sorter remains ranking-only: no score fields render, no scores are saved, no auto-skip setting is shown, and only ranks are written to Google Sheets.
 
@@ -116,70 +202,17 @@ When enabled, each song can have a score from `0` to `10`. Blank scores are allo
 
 Settings includes `Auto-skip score gap`, defaulting to `10`. During sorting, if both compared songs have valid scores and their absolute score difference is greater than or equal to this setting, the higher-scored song is picked automatically. Equal scores and missing scores never auto-skip. For example, `10` only skips comparisons such as `10` vs `0`, while `7` skips `10` vs `3`.
 
-## User-Defined Score Column
+## 8. Optional: Write Ranks To Google Sheets
 
-If the shared sheet was not set up with a score column but you still want users to be able to add their own scores, set `allowCustomScoreColumn: true` and omit `scoreColumnHeader`:
-
-```ts
-googleSheets: {
-  clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
-  appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
-  rankColumnHeader: "Rank",
-  allowCustomScoreColumn: true,
-}
-```
-
-With this enabled, when a user clicks `Choose Sheet` in Settings, they are first asked whether they have added a personal score column to the sheet and, if so, what its header is. That name is saved locally. From that point on, the sorter behaves identically to having `scoreColumnHeader` set: scores are imported from the sheet on sort start, score fields are shown during sorting, auto-skip is available, and scores are written back together with ranks at the end.
-
-If `scoreColumnHeader` is set at the config level, `allowCustomScoreColumn` has no effect — the config-level header takes priority and the column prompt is never shown.
-
-User flow:
-
-1. User adds a score column to the shared spreadsheet themselves.
-2. Open Settings → click `Choose Sheet`.
-3. A prompt asks whether the sheet has a score column. The user selects yes and enters the column header exactly as it appears in the sheet.
-4. The sheet picker opens. After picking, scores are imported immediately.
-5. The column name is shown under `Score column` in Settings and can be edited at any time.
-6. Disconnecting the sheet (Forget Sheet) also clears the saved column name.
-
-## Google Sheets Writeback
-
-The sorter can write completed ranks directly into a locally saved Google Spreadsheet selection. This is browser-only and stores the Google OAuth access token in `localStorage` so users can keep writing after refreshes without repeating OAuth until Google rejects or expires the token. The selected spreadsheet ID and display name are also saved locally so users can pick the sheet once in Settings.
-
-To enable it:
-
-1. Add `googleSheets` to `customize/config.ts`:
-
-   ```ts
-   googleSheets: {
-     clientId: "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
-     appId: "YOUR_GOOGLE_CLOUD_PROJECT_NUMBER",
-     rankColumnHeader: "rank",
-     scoreColumnHeader: "Score (optional)",
-   }
-   ```
-
-2. Set the Picker API key through Vite, for example in a local `.env.local` file:
-
-   ```bash
-   VITE_GOOGLE_API_KEY=your-browser-api-key
-   ```
-
-3. Configure Google Cloud:
-   - Enable Google Picker API.
-   - Enable Google Drive API.
-   - Enable Google Sheets API.
-   - Add the OAuth scope `https://www.googleapis.com/auth/drive.file` to the consent screen.
-   - Restrict the API key by HTTP referrer, for example `https://minigamer42.github.io/*` and optionally `http://localhost:5173/*`.
-   - Restrict the API key to Google Picker API and Drive API if required by Picker.
+The sorter can write completed ranks directly into a selected Google Spreadsheet. This is browser-only and stores the Google OAuth access token in `localStorage` until Google rejects or expires it. The selected spreadsheet ID and display name are also saved locally.
 
 Spreadsheet format:
 
 - The first non-hidden grid worksheet is used.
 - Row `1` is the header row.
 - Column `A` contains song IDs.
-- The rank column is the header that exactly matches `googleSheets.rankColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
-- If score support is enabled and at least one song has a score, the score column is the header that exactly matches `googleSheets.scoreColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
+- The rank column header must exactly match `googleSheets.rankColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
+- If score support is enabled and at least one song has a score, the score column header must exactly match `googleSheets.scoreColumnHeader` after trimming surrounding whitespace. Matching is case-sensitive.
 - Data rows may be in any order.
 
 Writeback validation is strict. The write aborts before changing cells if the sheet is empty, the rank header is missing or duplicated, the enabled score header is missing or duplicated, a song ID is duplicated or non-numeric, the sheet contains unknown song IDs, or the sheet is missing sorter song IDs.
@@ -195,32 +228,69 @@ User flow:
 
 Refreshing the page keeps both the selected spreadsheet and the stored OAuth access token. If Google rejects the token, the app removes it and the next write or sheet selection requests authorization again.
 
-## Development
+## 9. Build And Preview
 
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the local dev server:
-
-```bash
-npm run dev
-```
-
-Build for production:
+Run the production build:
 
 ```bash
 npm run build
 ```
 
-Preview the generated `dist/` output locally:
+Build and preview the local Pages-style output:
 
 ```bash
 npm run preview
 ```
 
+This serves the sorter index at `/` and the local sorter at `/test/`.
+
+## 10. Deploy To GitHub Pages
+
+The included workflow deploys to the `gh-pages` branch and treats `main` as the shared app template.
+
+Each sorter lives in its own branch named `pr-sorter/*`. For example, a branch named `pr-sorter/bang-dream` creates a sorter at the `bang-dream` slug on the Pages site.
+
+The workflow combines:
+
+- app code, styles, workflow files, and build tooling from `main`
+- `customize/` from each `pr-sorter/*` branch
+
+That means sorter branches only need to change their `customize/` files. When you push a branch named `pr-sorter/YOUR_SORTER_NAME`, GitHub Actions checks out `main`, copies that branch's `customize/` directory into the app, builds the sorter, and publishes it under a slug generated from `YOUR_SORTER_NAME`.
+
+Slug generation lowercases the branch suffix, turns `/` into `-`, and keeps only letters, numbers, `.`, `_`, and `-`. For example:
+
+```text
+pr-sorter/Bang Dream -> bang-dream
+pr-sorter/group/my-sorter -> group-my-sorter
+```
+
+Pushing to `main` rebuilds the sorter index page and all remote `pr-sorter/*` branches. Pushing to a single `pr-sorter/*` branch rebuilds that sorter and refreshes the index while keeping the other published sorter files.
+
+The Pages index also publishes a machine-readable catalog at:
+
+```text
+https://YOUR_USERNAME.github.io/pr-sorter/sorter-index.json
+```
+
+That catalog contains both the sorters hosted by that repository and the external sorter collections it links to:
+
+```json
+{
+  "sorters": [],
+  "externalSources": []
+}
+```
+
+To include another repository that uses the same template, add its Pages index to `src/sorterIndex/externalSorterSources.json`. When the index page loads, it reads `sorter-index.json` from each configured source. This lets collections discover other collections through each other without rebuilding every site. Already visited collections and already found sorter URLs are ignored, and if this repository's own GitHub Pages URL is listed, the page skips it so the collection is not duplicated.
+
+In repository settings:
+
+1. Enable GitHub Pages.
+2. Set the Pages source to deploy from the `gh-pages` branch.
+3. If Google features are enabled, add the `VITE_GOOGLE_API_KEY` repository variable described in step 4.
+
 ## Credit
 
 Most of the project was taken from this repo by FlatoLitou: [Winter2025ED](https://github.com/Flatolitou/Winter2025ED).
+
+Major rewrite and sorter template work by [Minigamer42](https://github.com/Minigamer42/pr-sorter).
