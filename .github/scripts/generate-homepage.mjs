@@ -21,16 +21,86 @@ if (existsSync(ghPagesDir)) {
 
 sorters.sort((a, b) => a.title.localeCompare(b.title));
 
-const cards = sorters.length === 0
-  ? `<p class="empty">No sorters available yet.</p>`
-  : sorters.map(s => `
-    <a class="card" href="./${esc(s.slug)}/">
-      <div class="card-header">
-        <img class="card-favicon" src="./${esc(s.slug)}/favicon.ico" alt="" width="20" height="20">
-        <div class="card-title">${esc(s.title)}</div>
-      </div>
-      ${s.description ? `<div class="card-desc">${esc(s.description)}</div>` : ''}
-    </a>`).join('');
+function cardHtml(s) {
+  return `
+      <a class="card" href="./${esc(s.slug)}/">
+        <div class="card-header">
+          <img class="card-favicon" src="./${esc(s.slug)}/favicon.ico" alt="" width="20" height="20">
+          <div class="card-title">${esc(s.title)}</div>
+        </div>
+        ${s.description ? `<div class="card-desc">${esc(s.description)}</div>` : ''}
+      </a>`;
+}
+
+const categories = [...new Set(sorters.filter(s => s.category).map(s => s.category))].sort((a, b) => a.localeCompare(b));
+const hasCategories = categories.length > 0;
+
+let mainContent;
+let filterScript = '';
+
+if (sorters.length === 0) {
+  mainContent = `<p class="empty">No sorters available yet.</p>`;
+} else if (!hasCategories) {
+  mainContent = `<div class="grid">${sorters.map(cardHtml).join('')}
+    </div>`;
+} else {
+  const categorized = sorters.filter(s => s.category);
+  const uncategorized = sorters.filter(s => !s.category);
+
+  const chips = [
+    `<button class="chip active" data-filter="__all__">All</button>`,
+    ...categories.map(cat => `<button class="chip" data-filter="${esc(cat)}">${esc(cat)}</button>`),
+  ].join('\n      ');
+
+  const categorySections = categories.map(cat => {
+    const cards = categorized.filter(s => s.category === cat).map(cardHtml).join('');
+    return `
+      <div class="section" data-section="${esc(cat)}">
+        <h2 class="section-heading">${esc(cat)}</h2>
+        <div class="grid">${cards}
+        </div>
+      </div>`;
+  }).join('');
+
+  const uncategorizedSection = uncategorized.length > 0 ? `
+      <div class="section" data-section="__uncategorized__">
+        <div class="grid">${uncategorized.map(cardHtml).join('')}
+        </div>
+      </div>` : '';
+
+  mainContent = `<div class="chips-bar">
+      ${chips}
+    </div>
+    <div id="sections">${categorySections}${uncategorizedSection}
+    </div>`;
+
+  filterScript = `
+  <script>
+    const chips = document.querySelectorAll('.chip');
+    const sections = document.querySelectorAll('.section');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const filter = chip.dataset.filter;
+        sections.forEach(section => {
+          if (filter === '__all__') {
+            section.hidden = false;
+            const h = section.querySelector('.section-heading');
+            if (h) h.hidden = false;
+          } else {
+            const match = section.dataset.section === filter;
+            section.hidden = !match;
+            if (match) {
+              const h = section.querySelector('.section-heading');
+              if (h) h.hidden = true;
+            }
+          }
+        });
+      });
+    });
+  </script>`;
+}
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -76,6 +146,45 @@ const html = `<!DOCTYPE html>
       margin: 0 0 36px;
       font-size: 1rem;
       text-align: center;
+    }
+    .chips-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .chip {
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(160, 255, 172, 0.35);
+      background: rgba(0, 26, 63, 0.5);
+      color: #cbd5e1;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+    .chip:hover {
+      border-color: rgba(160, 255, 172, 0.7);
+      background: rgba(0, 40, 90, 0.7);
+      color: #a0ffac;
+    }
+    .chip.active {
+      border-color: #a0ffac;
+      background: rgba(160, 255, 172, 0.15);
+      color: #a0ffac;
+    }
+    .section-heading {
+      font-size: 1.2rem;
+      color: #a0ffac;
+      margin: 0 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(160, 255, 172, 0.2);
+    }
+    .section {
+      margin-bottom: 32px;
+    }
+    .section:last-child {
+      margin-bottom: 0;
     }
     .grid {
       display: grid;
@@ -130,9 +239,8 @@ const html = `<!DOCTYPE html>
   <div class="surface">
     <h1>Sorter Collection</h1>
     <p class="subtitle">Pick a sorter to get started.</p>
-    <div class="grid">${cards}
-    </div>
-  </div>
+    ${mainContent}
+  </div>${filterScript}
 </body>
 </html>`;
 

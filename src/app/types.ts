@@ -2,6 +2,7 @@ export type AppConfig = {
   localStoragePrefix: string;
   title: string;
   description: string;
+  category?: string;
   googleSheets?: GoogleSheetsConfig;
 };
 
