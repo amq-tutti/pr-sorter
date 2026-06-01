@@ -15,7 +15,6 @@ type SorterIndexCatalog = {
 
 export function SorterIndex() {
   const [externalSorters, setExternalSorters] = useState<SorterIndexEntry[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("__all__");
 
   useEffect(() => {
     document.title = "PR Sorters";
@@ -42,67 +41,17 @@ export function SorterIndex() {
     };
   }, []);
 
-  const categories = [...new Set(sorters.filter((s) => s.category).map((s) => s.category!))].sort();
-  const hasUncategorized = sorters.some((s) => !s.category);
-  const hasCategories = categories.length > 0 || (hasUncategorized && sorters.some((s) => s.category));
-
-  const filteredLocalSorters =
-    selectedCategory === "__all__"
-      ? sorters
-      : selectedCategory === "__uncategorized__"
-        ? sorters.filter((s) => !s.category)
-        : sorters.filter((s) => s.category === selectedCategory);
-
-  const externalGroups = buildExternalGroups(externalSorters);
-
-  const hasAnySorters = sorters.length > 0 || externalSorters.length > 0;
+  const allSorters = [...sorters, ...externalSorters];
+  const sorterGroups = groupSorters(allSorters);
 
   return (
     <div className="main-page main-page--landing sorter-index-page">
-      <div className="title">Choose a sorter to start ranking.</div>
-      {hasAnySorters ? (
+      <div className="title">
+        Choose a sorter to start ranking.
+      </div>
+      {allSorters.length ? (
         <div className="sorter-index-sections">
-          {sorters.length > 0 ? (
-            <section className="sorter-index-section">
-              <h2 className="sorter-index-section__title">This Collection</h2>
-              {hasCategories ? (
-                <div className="sorter-index-chips">
-                  <button
-                    className={`sorter-index-chip${selectedCategory === "__all__" ? " sorter-index-chip--active" : ""}`}
-                    type="button"
-                    onClick={() => setSelectedCategory("__all__")}
-                  >
-                    All
-                  </button>
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      className={`sorter-index-chip${selectedCategory === cat ? " sorter-index-chip--active" : ""}`}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                  {hasUncategorized ? (
-                    <button
-                      className={`sorter-index-chip${selectedCategory === "__uncategorized__" ? " sorter-index-chip--active" : ""}`}
-                      type="button"
-                      onClick={() => setSelectedCategory("__uncategorized__")}
-                    >
-                      Uncategorized
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-              <div className="sorter-index-grid">
-                {filteredLocalSorters.map((sorter) => (
-                  <SorterCard sorter={sorter} key={sorter.url ?? sorter.slug} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-          {externalGroups.map((group) => (
+          {sorterGroups.map((group) => (
             <section className="sorter-index-section" key={group.title}>
               <h2 className="sorter-index-section__title">{group.title}</h2>
               <div className="sorter-index-grid">
@@ -135,17 +84,26 @@ function SorterCard({ sorter }: { sorter: SorterIndexEntry }) {
   );
 }
 
-function buildExternalGroups(externalSorters: SorterIndexEntry[]): { title: string; sorters: SorterIndexEntry[] }[] {
-  const groups = new Map<string, SorterIndexEntry[]>();
+function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: SorterIndexEntry[] }[] {
+  const localSorters = entries.filter((sorter) => !sorter.sourceTitle);
+  const groups = localSorters.length ? [{ title: "This Collection", sorters: localSorters }] : [];
+  const externalGroups = new Map<string, SorterIndexEntry[]>();
 
-  for (const sorter of externalSorters) {
-    if (!sorter.sourceTitle) continue;
-    const group = groups.get(sorter.sourceTitle) ?? [];
+  for (const sorter of entries) {
+    if (!sorter.sourceTitle) {
+      continue;
+    }
+
+    const group = externalGroups.get(sorter.sourceTitle) ?? [];
     group.push(sorter);
-    groups.set(sorter.sourceTitle, group);
+    externalGroups.set(sorter.sourceTitle, group);
   }
 
-  return [...groups.entries()].map(([title, sorters]) => ({ title, sorters }));
+  for (const [title, group] of externalGroups) {
+    groups.push({ title, sorters: group });
+  }
+
+  return groups;
 }
 
 async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {

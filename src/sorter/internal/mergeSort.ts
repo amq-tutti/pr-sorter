@@ -143,6 +143,13 @@ export function songSortInfo(sort: SortState, songIndex: number): CurrentSongSor
   return null;
 }
 
+function wholeSetEstimate(sort: SortState, activeRange: CurrentSongSortInfo): CurrentSongSortInfo {
+  return wholeSetEstimateFromQueue([
+    ...sort.groups.map((group) => ({ size: group.length, range: null })),
+    { size: activeRange.songCount, range: activeRange },
+  ]) ?? activeRange;
+}
+
 function wholeSetEstimateFromQueue(
   initialQueue: Array<{ size: number; range: CurrentSongSortInfo | null }>,
 ): CurrentSongSortInfo | null {

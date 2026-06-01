@@ -8,13 +8,10 @@ type SettingsModalProps = {
     googleSheetsDisabledReason: string | null;
     googleSpreadsheetSelection: GoogleSpreadsheetSelection | null;
     isConnectingGoogleSheet: boolean;
-    allowCustomScoreColumn: boolean;
-    customScoreColumnHeader: string | null;
     onClose(): void;
     onChange(settings: Settings): void;
     onChooseGoogleSheet(): void;
     onClearGoogleSheet(): void;
-    onEditCustomScoreColumn(): void;
 };
 
 const regions: { value: Region; label: string }[] = [
@@ -37,13 +34,10 @@ export function SettingsModal({
     googleSheetsDisabledReason,
     googleSpreadsheetSelection,
     isConnectingGoogleSheet,
-    allowCustomScoreColumn,
-    customScoreColumnHeader,
     onClose,
     onChange,
     onChooseGoogleSheet,
-    onClearGoogleSheet,
-    onEditCustomScoreColumn
+    onClearGoogleSheet
 }: SettingsModalProps) {
     if (!open) {
         return null;
@@ -139,23 +133,6 @@ export function SettingsModal({
                             <button className="option-button" type="button" onClick={onClearGoogleSheet}>
                                 Forget Sheet
                             </button>
-                        ) : null}
-                        {googleSpreadsheetSelection && allowCustomScoreColumn ? (
-                            <div className="option-group">
-                                <p>Score column:
-                                <span
-                                    className="help-icon help-icon--right"
-                                    data-tooltip={`If you've added a personal score column to the shared sheet that didn't have a score column, enter its name here. This will allow you to set scores while sorting and to use "Auto-skip score gap" setting. Your scores will be written back to the sheet at the end of sorting together with ranks.`}
-                                    aria-label="Score column help"
-                                >?</span>
-                            </p>
-                                <div className="setting-value">
-                                    {customScoreColumnHeader ?? 'None'}
-                                </div>
-                                <button className="option-button" type="button" onClick={onEditCustomScoreColumn}>
-                                    {customScoreColumnHeader ? 'Edit' : 'Set up'}
-                                </button>
-                            </div>
                         ) : null}
                     </div>
                 ) : null}

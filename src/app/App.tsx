@@ -22,7 +22,6 @@ import { HistoryModal } from "./components/HistoryModal";
 import { Playlist, type PlaylistMode, type PlaylistScoreFilter } from "./components/Playlist";
 import { Progress } from "./components/Progress";
 import { Results } from "./components/Results";
-import { ScoreColumnModal } from "./components/ScoreColumnModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { SongListModal } from "./components/SongListModal";
 import { isScoreEnabled, normalizeScore } from "./internal/songScores";
@@ -49,6 +48,7 @@ export function App({ config, songs }: AppProps) {
   );
   const songIds = useMemo(() => resolvedSongs.map((song) => song.id), [resolvedSongs]);
   const storage = useMemo(() => createStorage(config, songIds), [config, songIds]);
+  const scoreEnabled = isScoreEnabled(config);
   const [screen, setScreen] = useState<Screen>("landing");
   const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
   const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
@@ -73,16 +73,8 @@ export function App({ config, songs }: AppProps) {
   const [googleSpreadsheetSelection, setGoogleSpreadsheetSelection] = useState<GoogleSpreadsheetSelection | null>(() =>
     storage.loadGoogleSpreadsheetSelection(),
   );
-  const [customScoreColumnHeader, setCustomScoreColumnHeader] = useState<string | null>(
-    () => storage.loadCustomScoreColumnHeader(),
-  );
-  const [isScoreColumnModalOpen, setScoreColumnModalOpen] = useState(false);
-  const [pendingSheetPick, setPendingSheetPick] = useState(false);
   const pendingScoreWritebackRef = useRef<Map<number, number>>(new Map());
   const scoreWritebackQueueRef = useRef<Promise<void>>(Promise.resolve());
-
-  const scoreEnabled = isScoreEnabled(config) ||
-    Boolean(config.googleSheets?.allowCustomScoreColumn && customScoreColumnHeader);
 
   useEffect(() => {
     document.title = config.title;
@@ -157,34 +149,6 @@ export function App({ config, songs }: AppProps) {
   }, [screen, storage]);
 
   function startSort(): void {
-    const writebackConfig = googleWritebackConfig();
-
-    if (scoreEnabled) {
-      storage.clearScores();
-      setScoresBySongId({});
-    }
-
-    if (scoreEnabled && writebackConfig && googleSpreadsheetSelection) {
-      void loadScoresFromGoogleSheet(writebackConfig, googleSpreadsheetSelection, songIds)
-        .then((sheetScores) => {
-          const nextScores = scoresRecordFromSheet(sheetScores);
-          setScoresBySongId(nextScores);
-          storage.saveScores(nextScores);
-          return nextScores;
-        })
-        .catch((error: unknown) => {
-          console.error("Could not reload scores from sheet on start:", error);
-          return {} as SongScoresById;
-        })
-        .then((nextScores) => {
-          const nextSort = resolveAutoSkips(createSort(resolvedSongs.length), nextScores, settings);
-          setSort(nextSort);
-          setScreen(screenFor(nextSort));
-          storage.saveSort(nextSort);
-        });
-      return;
-    }
-
     const nextSort = createSort(resolvedSongs.length);
     setSort(nextSort);
     setScreen(screenFor(nextSort));
@@ -448,7 +412,7 @@ export function App({ config, songs }: AppProps) {
     });
   }
 
-  function googleWritebackConfig(overrideCustomScoreColumn?: string) {
+  function googleWritebackConfig() {
     const googleSheets = config.googleSheets;
     const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
 
@@ -460,22 +424,7 @@ export function App({ config, songs }: AppProps) {
       ...googleSheets,
       apiKey,
       tokenStorageKey: `${config.localStoragePrefix}:google-oauth-access-token`,
-      scoreColumnHeader: googleSheets.scoreColumnHeader ?? overrideCustomScoreColumn ?? customScoreColumnHeader ?? undefined,
     };
-  }
-
-  function copyScores(): void {
-    const lines = resolvedSongs.map((song) => scoresBySongId[song.id] ?? "");
-
-    void navigator.clipboard
-      .writeText(lines.join("\n"))
-      .then(() => {
-        alert("Copied scores to clipboard!");
-      })
-      .catch((error: unknown) => {
-        console.error("Error copying scores:", error);
-        alert("Could not copy scores to clipboard.");
-      });
   }
 
   function copyRanks(): void {
@@ -601,36 +550,13 @@ export function App({ config, songs }: AppProps) {
       return;
     }
 
-    if (config.googleSheets?.allowCustomScoreColumn && !config.googleSheets.scoreColumnHeader) {
-      setCustomScoreColumnHeader(null);
-      storage.clearCustomScoreColumnHeader();
-      storage.clearScores();
-      setScoresBySongId({});
-      setPendingSheetPick(true);
-      setSettingsOpen(false);
-      setScoreColumnModalOpen(true);
-      return;
-    }
-
-    proceedWithChooseSheet();
-  }
-
-  function proceedWithChooseSheet(effectiveCustomColumn?: string): void {
-    const writebackConfig = googleWritebackConfig(effectiveCustomColumn);
-    if (!writebackConfig) {
-      return;
-    }
-
-    const effectiveScoreEnabled = isScoreEnabled(config) ||
-      Boolean(config.googleSheets?.allowCustomScoreColumn && effectiveCustomColumn);
-
     setConnectingGoogleSheet(true);
     void chooseGoogleSpreadsheet(writebackConfig)
       .then(async (spreadsheet) => {
         setGoogleSpreadsheetSelection(spreadsheet);
         storage.saveGoogleSpreadsheetSelection(spreadsheet);
 
-        if (effectiveScoreEnabled) {
+        if (scoreEnabled) {
           try {
             const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
             const loadedScores = scoresRecordFromSheet(sheetScores);
@@ -658,37 +584,9 @@ export function App({ config, songs }: AppProps) {
       });
   }
 
-  function handleScoreColumnConfirm(header: string | null): void {
-    setScoreColumnModalOpen(false);
-    if (header) {
-      setCustomScoreColumnHeader(header);
-      storage.saveCustomScoreColumnHeader(header);
-    } else {
-      setCustomScoreColumnHeader(null);
-      storage.clearCustomScoreColumnHeader();
-    }
-    setSettingsOpen(true);
-    if (pendingSheetPick) {
-      setPendingSheetPick(false);
-      proceedWithChooseSheet(header ?? undefined);
-    }
-  }
-
-  function handleScoreColumnCancel(): void {
-    setScoreColumnModalOpen(false);
-    setPendingSheetPick(false);
-    setSettingsOpen(true);
-  }
-
   function clearSheetSelection(): void {
     setGoogleSpreadsheetSelection(null);
     storage.clearGoogleSpreadsheetSelection();
-    if (config.googleSheets?.allowCustomScoreColumn) {
-      setCustomScoreColumnHeader(null);
-      storage.clearCustomScoreColumnHeader();
-      storage.clearScores();
-      setScoresBySongId({});
-    }
   }
 
   function playlistEligibleIndexes(nextFilter: PlaylistScoreFilter = playlistScoreFilter): number[] {
@@ -733,13 +631,10 @@ export function App({ config, songs }: AppProps) {
         googleSheetsDisabledReason={googleSheetsDisabledReason}
         googleSpreadsheetSelection={googleSpreadsheetSelection}
         isConnectingGoogleSheet={isConnectingGoogleSheet}
-        allowCustomScoreColumn={Boolean(config.googleSheets?.allowCustomScoreColumn)}
-        customScoreColumnHeader={customScoreColumnHeader}
         onClose={() => setSettingsOpen(false)}
         onChange={updateSettings}
         onChooseGoogleSheet={chooseSheet}
         onClearGoogleSheet={clearSheetSelection}
-        onEditCustomScoreColumn={() => { setSettingsOpen(false); setScoreColumnModalOpen(true); }}
       />
       <HistoryModal
         open={isHistoryOpen}
@@ -762,13 +657,6 @@ export function App({ config, songs }: AppProps) {
         onScoreChange={updateScore}
         onWriteSheetScores={writeSongListScoresToSheet}
         onClose={() => setSongListOpen(false)}
-      />
-      <ScoreColumnModal
-        open={isScoreColumnModalOpen}
-        initialHeader={customScoreColumnHeader}
-        isPicking={pendingSheetPick}
-        onConfirm={handleScoreColumnConfirm}
-        onCancel={handleScoreColumnCancel}
       />
       <div className={`main-page ${screen === "landing" ? "main-page--landing" : ""}`}>
         {screen !== "sorting" ? (
@@ -793,8 +681,6 @@ export function App({ config, songs }: AppProps) {
           onStart={startSort}
           onLoad={loadSort}
           onUndo={undoPick}
-          scoreEnabled={scoreEnabled}
-          onCopyScores={copyScores}
           onCopyRanks={copyRanks}
           onWriteRanksToSheet={writeRanksToSheet}
           onSetupGoogleSheet={() => setSettingsOpen(true)}

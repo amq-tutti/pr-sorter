@@ -2,7 +2,6 @@ export type AppConfig = {
   localStoragePrefix: string;
   title: string;
   description: string;
-  category?: string;
   fallbackAnimeName?: string;
   googleSheets?: GoogleSheetsConfig;
 };
@@ -12,7 +11,6 @@ export type GoogleSheetsConfig = {
   appId: string;
   rankColumnHeader: string;
   scoreColumnHeader?: string;
-  allowCustomScoreColumn?: boolean;
 };
 
 export type GoogleSpreadsheetSelection = {
