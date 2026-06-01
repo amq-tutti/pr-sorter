@@ -49,6 +49,8 @@ jobs:
         run: |
           node .github/scripts/write-meta.mjs "${{ steps.slug.outputs.slug }}"
           cp customize/favicon.ico dist/favicon.ico
+          mkdir -p dist/customize
+          cp customize/favicon.ico dist/customize/favicon.ico
 
       - uses: actions/upload-artifact@v4
         with:
