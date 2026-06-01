@@ -3,6 +3,7 @@ export type AppConfig = {
   title: string;
   description: string;
   category?: string;
+  fallbackAnimeName?: string;
   googleSheets?: GoogleSheetsConfig;
 };
 
@@ -29,7 +30,7 @@ export type Settings = {
   autoSkipScoreDifference: number;
 };
 
-export type Screen = "landing" | "sorting" | "complete";
+export type Screen = "landing" | "sorting" | "complete" | "playlist";
 
 export type SavedProgressKind = "none" | "in-progress" | "complete";
 

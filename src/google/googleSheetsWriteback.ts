@@ -1,8 +1,10 @@
-import { loadGoogleApis } from "./googleApiLoader";
-import { readScoresFromFirstSheet, writeRanksToFirstSheet } from "./sheetsClient";
+import { loadGoogleApis, loadGoogleIdentityServices } from "./googleApiLoader";
+import { readScoresFromFirstSheet, writeRanksToFirstSheet, writeScoresToFirstSheet } from "./sheetsClient";
 import {
   GooglePickerCanceledError,
+  GoogleAuthenticationRequiredError,
   GoogleWritebackError,
+  type GoogleSheetsAccessConfig,
   type GoogleIdentityServices,
   type GooglePicker,
   type GoogleSheetsWritebackConfig,
@@ -13,8 +15,16 @@ import {
 
 const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const TOKENINFO_ENDPOINT = "https://oauth2.googleapis.com/tokeninfo";
+const TOKEN_EXPIRY_BUFFER_MS = 60_000;
+const DEFAULT_ACCESS_TOKEN_TTL_MS = 3_600_000;
 
-let sessionToken: string | null = null;
+type StoredAccessToken = {
+  accessToken: string;
+  expiresAt: number;
+  scope: string;
+};
+
+let sessionToken: StoredAccessToken | null = null;
 let tokenClient: TokenClient | null = null;
 let pendingTokenReject: ((error: GoogleWritebackError) => void) | null = null;
 
@@ -24,9 +34,26 @@ export function clearGoogleSessionToken(): void {
   sessionToken = null;
 }
 
-function clearStoredToken(config: GoogleSheetsWritebackConfig): void {
+function clearStoredToken(config: GoogleSheetsAccessConfig): void {
   clearGoogleSessionToken();
   localStorage.removeItem(config.tokenStorageKey);
+}
+
+export async function getGoogleSheetsAccessToken(config: GoogleSheetsAccessConfig): Promise<string> {
+  if (!config.clientId) {
+    throw new GoogleWritebackError("Google integration is not configured.");
+  }
+
+  try {
+    const google = await loadGoogleIdentityServices();
+    return await getToken(google, config);
+  } catch (error) {
+    if (isAuthError(error)) {
+      clearStoredToken(config);
+    }
+
+    throw error;
+  }
 }
 
 export async function writeRanksToGoogleSheet(
@@ -108,18 +135,51 @@ export async function loadScoresFromGoogleSheet(
   }
 }
 
-async function getToken(google: GoogleIdentityServices, config: GoogleSheetsWritebackConfig): Promise<string> {
-  if (sessionToken && (await isStoredTokenValid(sessionToken))) {
-    return sessionToken;
+export async function writeScoresToGoogleSheet(
+  config: GoogleSheetsWritebackConfig,
+  spreadsheet: PickedSpreadsheet,
+  scoresBySongId: Map<number, number>,
+  options: { allowAuthPrompt?: boolean } = {},
+): Promise<number> {
+  if (!config.clientId || !config.appId || !config.apiKey || !config.rankColumnHeader || !config.scoreColumnHeader) {
+    throw new GoogleWritebackError("Google integration is not configured.");
+  }
+
+  try {
+    const { google } = await loadGoogleApis();
+    const token = await getToken(google, config, options);
+
+    return await writeScoresToFirstSheet({
+      spreadsheetId: spreadsheet.id,
+      token,
+      scoreColumnHeader: config.scoreColumnHeader,
+      scoresBySongId,
+    });
+  } catch (error) {
+    if (isAuthError(error)) {
+      clearStoredToken(config);
+    }
+
+    throw error;
+  }
+}
+
+async function getToken(
+  google: GoogleIdentityServices,
+  config: GoogleSheetsAccessConfig,
+  options: { allowAuthPrompt?: boolean } = { allowAuthPrompt: true },
+): Promise<string> {
+  if (isUsableStoredAccessToken(sessionToken)) {
+    return sessionToken.accessToken;
   }
   sessionToken = null;
 
-  const storedToken = localStorage.getItem(config.tokenStorageKey);
-  if (storedToken && (await isStoredTokenValid(storedToken))) {
+  const storedToken = await loadStoredAccessToken(config.tokenStorageKey);
+  if (isUsableStoredAccessToken(storedToken)) {
     sessionToken = storedToken;
-    return storedToken;
+    saveStoredAccessToken(config.tokenStorageKey, storedToken);
+    return storedToken.accessToken;
   }
-  localStorage.removeItem(config.tokenStorageKey);
 
   tokenClient ??= google.accounts.oauth2.initTokenClient({
     client_id: config.clientId,
@@ -134,25 +194,112 @@ async function getToken(google: GoogleIdentityServices, config: GoogleSheetsWrit
     },
   });
 
-  return requestToken(tokenClient, config.tokenStorageKey);
+  if (storedToken) {
+    try {
+      return await requestToken(tokenClient, config.tokenStorageKey, "");
+    } catch (error) {
+      if (options.allowAuthPrompt === false) {
+        throw new GoogleAuthenticationRequiredError();
+      }
+
+      console.info("Silent Google OAuth token refresh failed; requesting user authorization.", error);
+    }
+  }
+
+  if (options.allowAuthPrompt === false) {
+    throw new GoogleAuthenticationRequiredError();
+  }
+
+  return requestToken(tokenClient, config.tokenStorageKey, "consent");
 }
 
-async function isStoredTokenValid(token: string): Promise<boolean> {
+async function loadStoredAccessToken(tokenStorageKey: string): Promise<StoredAccessToken | null> {
+  const rawToken = localStorage.getItem(tokenStorageKey);
+  if (!rawToken) {
+    return null;
+  }
+
+  const parsedToken = parseStoredAccessToken(rawToken);
+  if (parsedToken) {
+    return parsedToken;
+  }
+
+  const legacyToken = rawToken.trim();
+  if (!legacyToken) {
+    localStorage.removeItem(tokenStorageKey);
+    return null;
+  }
+
+  const migratedToken = await tokenInfoForAccessToken(legacyToken);
+  if (!migratedToken) {
+    return null;
+  }
+
+  saveStoredAccessToken(tokenStorageKey, migratedToken);
+  return migratedToken;
+}
+
+function parseStoredAccessToken(rawToken: string): StoredAccessToken | null {
+  try {
+    const parsed = JSON.parse(rawToken) as Partial<StoredAccessToken>;
+    if (
+      typeof parsed.accessToken === "string" &&
+      typeof parsed.expiresAt === "number" &&
+      typeof parsed.scope === "string" &&
+      parsed.accessToken.trim() !== "" &&
+      parsed.scope.split(/\s+/).includes(DRIVE_FILE_SCOPE)
+    ) {
+      return {
+        accessToken: parsed.accessToken,
+        expiresAt: parsed.expiresAt,
+        scope: parsed.scope,
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+async function tokenInfoForAccessToken(token: string): Promise<StoredAccessToken | null> {
   try {
     const response = await fetch(`${TOKENINFO_ENDPOINT}?access_token=${encodeURIComponent(token)}`);
     if (!response.ok) {
-      return false;
+      return null;
     }
 
-    const tokenInfo = (await response.json()) as { scope?: string };
+    const tokenInfo = (await response.json()) as { expires_in?: string | number; scope?: string };
     const scopes = tokenInfo.scope?.split(/\s+/) ?? [];
-    return scopes.includes(DRIVE_FILE_SCOPE);
+    if (!tokenInfo.scope || !scopes.includes(DRIVE_FILE_SCOPE)) {
+      return null;
+    }
+
+    const expiresInSeconds = Number(tokenInfo.expires_in);
+    return {
+      accessToken: token,
+      expiresAt: Date.now() + (Number.isFinite(expiresInSeconds) ? expiresInSeconds * 1000 : DEFAULT_ACCESS_TOKEN_TTL_MS),
+      scope: tokenInfo.scope,
+    };
   } catch {
-    return false;
+    return null;
   }
 }
 
-function requestToken(client: TokenClient, tokenStorageKey: string): Promise<string> {
+function isUsableStoredAccessToken(token: StoredAccessToken | null): token is StoredAccessToken {
+  return Boolean(
+    token &&
+      token.accessToken &&
+      token.scope.split(/\s+/).includes(DRIVE_FILE_SCOPE) &&
+      token.expiresAt - TOKEN_EXPIRY_BUFFER_MS > Date.now(),
+  );
+}
+
+function saveStoredAccessToken(tokenStorageKey: string, token: StoredAccessToken): void {
+  localStorage.setItem(tokenStorageKey, JSON.stringify(token));
+}
+
+function requestToken(client: TokenClient, tokenStorageKey: string, prompt: "" | "consent"): Promise<string> {
   return new Promise((resolve, reject) => {
     pendingTokenReject = reject;
     client.callback = (response: TokenResponse) => {
@@ -169,19 +316,28 @@ function requestToken(client: TokenClient, tokenStorageKey: string): Promise<str
         return;
       }
 
-      sessionToken = response.access_token;
-      localStorage.setItem(tokenStorageKey, response.access_token);
-      resolve(response.access_token);
+      const token = accessTokenFromResponse(response);
+      sessionToken = token;
+      saveStoredAccessToken(tokenStorageKey, token);
+      resolve(token.accessToken);
     };
 
     try {
-      client.requestAccessToken({ prompt: sessionToken ? "" : "consent" });
+      client.requestAccessToken({ prompt });
     } catch (error) {
       clearGoogleSessionToken();
       pendingTokenReject = null;
       reject(error);
     }
   });
+}
+
+function accessTokenFromResponse(response: TokenResponse): StoredAccessToken {
+  return {
+    accessToken: response.access_token ?? "",
+    expiresAt: Date.now() + Math.max(0, response.expires_in ?? DEFAULT_ACCESS_TOKEN_TTL_MS / 1000) * 1000,
+    scope: response.scope ?? DRIVE_FILE_SCOPE,
+  };
 }
 
 function pickSpreadsheet(

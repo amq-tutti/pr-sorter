@@ -26,14 +26,23 @@ export class GooglePickerCanceledError extends Error {
   }
 }
 
+export class GoogleAuthenticationRequiredError extends Error {
+  constructor() {
+    super("Google authentication is required.");
+    this.name = "GoogleAuthenticationRequiredError";
+  }
+}
+
 export type TokenResponse = {
   access_token?: string;
+  expires_in?: number;
+  scope?: string;
   error?: string;
   error_description?: string;
 };
 
 export type TokenClient = {
-  requestAccessToken(options: { prompt: "" | "consent" }): void;
+  requestAccessToken(options: { prompt: "" | "consent" | "select_account" }): void;
   callback?: (response: TokenResponse) => void;
 };
 
@@ -106,3 +115,8 @@ export type GoogleWindow = Window &
     google?: GoogleIdentityServices & { picker?: GooglePicker };
     gapi?: Gapi;
   };
+
+export type GoogleSheetsAccessConfig = {
+  clientId: string;
+  tokenStorageKey: string;
+};

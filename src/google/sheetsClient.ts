@@ -14,7 +14,53 @@ type SpreadsheetMetadataResponse = {
 };
 
 type ValuesResponse = {
-  values?: string[][];
+  values?: unknown[][];
+};
+
+export type SheetGridCell = {
+  value: string;
+  hyperlink: string | null;
+};
+
+export type FirstSheetGrid = {
+  title: string;
+  rows: SheetGridCell[][];
+};
+
+type SpreadsheetGridResponse = {
+  sheets?: Array<{
+    properties?: Partial<SheetProperties>;
+    data?: Array<{
+      rowData?: Array<{
+        values?: GridCellData[];
+      }>;
+    }>;
+  }>;
+};
+
+type GridCellData = {
+  formattedValue?: string;
+  hyperlink?: string;
+  userEnteredValue?: {
+    stringValue?: string;
+    numberValue?: number;
+    boolValue?: boolean;
+    formulaValue?: string;
+  };
+  userEnteredFormat?: {
+    textFormat?: {
+      link?: {
+        uri?: string;
+      };
+    };
+  };
+  textFormatRuns?: Array<{
+    format?: {
+      link?: {
+        uri?: string;
+      };
+    };
+  }>;
 };
 
 type WriteRanksOptions = {
@@ -33,6 +79,13 @@ type ReadScoresOptions = {
   scoreColumnHeader: string;
 };
 
+type WriteScoresOptions = {
+  spreadsheetId: string;
+  token: string;
+  scoreColumnHeader: string;
+  scoresBySongId: Map<number, number>;
+};
+
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
 
 export async function writeRanksToFirstSheet({
@@ -47,7 +100,7 @@ export async function writeRanksToFirstSheet({
   const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
   const updates = buildUpdates(values, sheet.title, ranksBySongId, rankColumnHeader, scoreColumnHeader, scoresBySongId);
 
-  await postRankUpdates(spreadsheetId, token, updates);
+  await postSheetValueUpdates(spreadsheetId, token, updates);
   return updates.length;
 }
 
@@ -60,6 +113,62 @@ export async function readScoresFromFirstSheet({
   const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
   const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
   return readScores(values, songIds, scoreColumnHeader);
+}
+
+export async function writeScoresToFirstSheet({
+  spreadsheetId,
+  token,
+  scoreColumnHeader,
+  scoresBySongId,
+}: WriteScoresOptions): Promise<number> {
+  if (scoresBySongId.size === 0) {
+    return 0;
+  }
+
+  const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
+  const values = await fetchSheetValues(spreadsheetId, sheet.title, token);
+  const updates = buildScoreUpdates(values, sheet.title, scoreColumnHeader, scoresBySongId);
+
+  if (updates.length === 0) {
+    return 0;
+  }
+
+  await postSheetValueUpdates(spreadsheetId, token, updates);
+  return updates.length;
+}
+
+export async function readFirstSheetGrid(spreadsheetId: string, token: string): Promise<FirstSheetGrid> {
+  const sheet = await fetchFirstUsableSheet(spreadsheetId, token);
+  const range = encodeURIComponent(quoteSheetName(sheet.title));
+  const metadata = await fetchSheetGrid(spreadsheetId, range, token);
+
+  const sheetGrid = (metadata.sheets ?? []).find((candidate) => candidate.properties?.title === sheet.title);
+  const rowData = sheetGrid?.data?.[0]?.rowData ?? [];
+
+  return {
+    title: sheet.title,
+    rows: rowData.map((row) => (row.values ?? []).map(gridCellFromCellData)),
+  };
+}
+
+async function fetchSheetGrid(spreadsheetId: string, encodedRange: string, token: string): Promise<SpreadsheetGridResponse> {
+  const baseUrl = `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}?includeGridData=true&ranges=${encodedRange}`;
+  const fields =
+    "sheets(properties(title,index,sheetType,hidden),data(rowData(values(formattedValue,hyperlink,userEnteredValue,userEnteredFormat/textFormat/link,textFormatRuns(format/link)))))";
+
+  try {
+    return await fetchJson<SpreadsheetGridResponse>(
+      `${baseUrl}&fields=${encodeURIComponent(fields)}`,
+      token,
+      "Sheets API read failed.",
+    );
+  } catch (error) {
+    if (!isRetryableSheetsReadError(error)) {
+      throw error;
+    }
+
+    return await fetchJson<SpreadsheetGridResponse>(baseUrl, token, "Sheets API read failed.");
+  }
 }
 
 async function fetchFirstUsableSheet(spreadsheetId: string, token: string): Promise<SheetProperties> {
@@ -92,12 +201,12 @@ async function fetchFirstUsableSheet(spreadsheetId: string, token: string): Prom
 async function fetchSheetValues(spreadsheetId: string, sheetTitle: string, token: string): Promise<string[][]> {
   const range = encodeURIComponent(quoteSheetName(sheetTitle));
   const response = await fetchJson<ValuesResponse>(
-    `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}/values/${range}`,
+    `${SHEETS_API_BASE}/${encodeURIComponent(spreadsheetId)}/values/${range}?valueRenderOption=UNFORMATTED_VALUE`,
     token,
     "Sheets API read failed.",
   );
 
-  return response.values ?? [];
+  return (response.values ?? []).map((row) => row.map((value) => String(value)));
 }
 
 function buildUpdates(
@@ -129,15 +238,11 @@ function buildUpdates(
   if (shouldWriteScores && scoreColumnHeader) {
     const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
 
-    if (scoreHeaderIndexes.length === 0) {
-      throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" was not found.`);
-    }
-
     if (scoreHeaderIndexes.length > 1) {
       throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" appears more than once.`);
     }
 
-    scoreColumnIndex = scoreHeaderIndexes[0];
+    scoreColumnIndex = scoreHeaderIndexes[0] ?? null;
   }
 
   const rowsBySongId = new Map<number, number>();
@@ -206,18 +311,14 @@ function buildUpdates(
 }
 
 function readScores(values: string[][], songIds: number[], scoreColumnHeader: string): Map<number, string> {
-  console.log("[readScores] raw sheet values:", values);
-  console.log("[readScores] looking for score column header:", JSON.stringify(scoreColumnHeader));
   const headerRow = values[0];
   if (!headerRow || headerRow.length === 0) {
     throw new GoogleWritebackError("Sheet is empty or missing a header row.");
   }
-  console.log("[readScores] header row:", headerRow);
 
   const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
-  console.log("[readScores] score column index(es) found:", scoreHeaderIndexes);
   if (scoreHeaderIndexes.length === 0) {
-    throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" was not found.`);
+    return new Map();
   }
 
   if (scoreHeaderIndexes.length > 1) {
@@ -254,7 +355,7 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
     seenSongIds.add(songId);
 
     const rawScore = values[rowIndex]?.[scoreColumnIndex];
-    const score = rawScore === undefined || rawScore === null ? "" : String(rawScore).trim();
+    const score = scoreValueFromSheetCell(rawScore);
     if (score !== "") {
       scoresBySongId.set(songId, score);
     }
@@ -272,7 +373,123 @@ function readScores(values: string[][], songIds: number[], scoreColumnHeader: st
   return scoresBySongId;
 }
 
-async function postRankUpdates(
+function scoreValueFromSheetCell(rawScore: string | undefined): string {
+  if (rawScore === undefined || rawScore === null) {
+    return "";
+  }
+
+  const score = String(rawScore).trim();
+  if (score === "") {
+    return "";
+  }
+
+  const numericScore = Number(score);
+  if (!Number.isFinite(numericScore)) {
+    return score;
+  }
+
+  return String(Math.round(numericScore * 1000) / 1000);
+}
+
+function buildScoreUpdates(
+  values: string[][],
+  sheetTitle: string,
+  scoreColumnHeader: string,
+  scoresBySongId: Map<number, number>,
+): Array<{ range: string; values: number[][] }> {
+  const headerRow = values[0];
+  if (!headerRow || headerRow.length === 0) {
+    throw new GoogleWritebackError("Sheet is empty or missing a header row.");
+  }
+
+  const scoreHeaderIndexes = matchingHeaderIndexes(headerRow, scoreColumnHeader);
+  if (scoreHeaderIndexes.length === 0) {
+    return [];
+  }
+
+  if (scoreHeaderIndexes.length > 1) {
+    throw new GoogleWritebackError(`Score header "${scoreColumnHeader}" appears more than once.`);
+  }
+
+  const scoreColumnIndex = scoreHeaderIndexes[0];
+  const rowsBySongId = rowsBySongIdFromValues(values);
+
+  return [...scoresBySongId.entries()].map(([songId, score]) => {
+    const rowNumber = rowsBySongId.get(songId);
+    if (rowNumber === undefined) {
+      throw new GoogleWritebackError(`Sheet is missing sorter song ID ${songId}.`);
+    }
+
+    return {
+      range: `${quoteSheetName(sheetTitle)}!${columnName(scoreColumnIndex + 1)}${rowNumber}`,
+      values: [[score]],
+    };
+  });
+}
+
+function rowsBySongIdFromValues(values: string[][]): Map<number, number> {
+  const rowsBySongId = new Map<number, number>();
+
+  for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
+    const rawId = values[rowIndex]?.[0];
+    const trimmedId = rawId === undefined || rawId === null ? "" : String(rawId).trim();
+
+    if (trimmedId === "") {
+      continue;
+    }
+
+    if (!/^\d+$/.test(trimmedId)) {
+      throw new GoogleWritebackError(`Sheet contains a non-numeric song ID in row ${rowIndex + 1}.`);
+    }
+
+    const songId = Number.parseInt(trimmedId, 10);
+    if (rowsBySongId.has(songId)) {
+      throw new GoogleWritebackError(`Sheet contains duplicate song ID ${songId}.`);
+    }
+
+    rowsBySongId.set(songId, rowIndex + 1);
+  }
+
+  return rowsBySongId;
+}
+
+function gridCellFromCellData(cell: GridCellData): SheetGridCell {
+  return {
+    value: cellValue(cell).trim(),
+    hyperlink:
+      cell.hyperlink ??
+      cell.userEnteredFormat?.textFormat?.link?.uri ??
+      cell.textFormatRuns?.find((run) => run.format?.link?.uri)?.format?.link?.uri ??
+      null,
+  };
+}
+
+function cellValue(cell: GridCellData): string {
+  if (cell.formattedValue !== undefined) {
+    return cell.formattedValue;
+  }
+
+  const entered = cell.userEnteredValue;
+  if (!entered) {
+    return "";
+  }
+
+  if (entered.stringValue !== undefined) {
+    return entered.stringValue;
+  }
+
+  if (entered.numberValue !== undefined) {
+    return String(entered.numberValue);
+  }
+
+  if (entered.boolValue !== undefined) {
+    return String(entered.boolValue);
+  }
+
+  return entered.formulaValue ?? "";
+}
+
+async function postSheetValueUpdates(
   spreadsheetId: string,
   token: string,
   updates: Array<{ range: string; values: number[][] }>,
@@ -310,10 +527,40 @@ async function fetchJson<T>(url: string, token: string, failureMessage: string):
   }
 
   if (!response.ok) {
-    throw new GoogleWritebackError(failureMessage);
+    throw new GoogleWritebackError(await formatFetchFailure(response, failureMessage));
   }
 
   return (await response.json()) as T;
+}
+
+async function formatFetchFailure(response: Response, failureMessage: string): Promise<string> {
+  const detail = await googleApiErrorDetail(response);
+  return detail ? `${failureMessage} ${detail}` : failureMessage;
+}
+
+async function googleApiErrorDetail(response: Response): Promise<string | null> {
+  try {
+    const payload = (await response.clone().json()) as { error?: { message?: unknown; status?: unknown } };
+    const message = typeof payload.error?.message === "string" ? payload.error.message.trim() : "";
+    const status = typeof payload.error?.status === "string" ? payload.error.status.trim() : "";
+
+    if (message && status) {
+      return `${status}: ${message}`;
+    }
+
+    return message || status || null;
+  } catch {
+    const text = (await response.text()).trim();
+    return text ? text.slice(0, 500) : null;
+  }
+}
+
+function isRetryableSheetsReadError(error: unknown): boolean {
+  if (!(error instanceof GoogleWritebackError)) {
+    return false;
+  }
+
+  return /Sheets API read failed\./.test(error.message) && !/OAuth token expired or was rejected/.test(error.message);
 }
 
 function quoteSheetName(sheetTitle: string): string {

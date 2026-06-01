@@ -93,6 +93,7 @@ export function SettingsModal({
                             type="number"
                             min="0"
                             max="10"
+                            step="0.01"
                             value={settings.autoSkipScoreDifference}
                             onChange={(event) => {
                                 const value = event.currentTarget.valueAsNumber;
@@ -108,7 +109,16 @@ export function SettingsModal({
                     <div className="option-group">
                         <p>Google Sheet:</p>
                         <div className="setting-value">
-                            {googleSpreadsheetSelection ? googleSpreadsheetSelection.name : 'No spreadsheet selected'}
+                            {googleSpreadsheetSelection ? (
+                                <a
+                                    className="setting-value-link"
+                                    href={`https://docs.google.com/spreadsheets/d/${encodeURIComponent(googleSpreadsheetSelection.id)}/edit`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    {googleSpreadsheetSelection.name}
+                                </a>
+                            ) : 'No spreadsheet selected'}
                         </div>
                         <button
                             className="option-button"

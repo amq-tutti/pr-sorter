@@ -11,20 +11,24 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-sorter:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref_name, 'pr-sorter/')
+  build-and-deploy-main:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref_name == 'main'
     runs-on: ubuntu-latest
-    concurrency:
-      group: build-${{ github.ref_name }}
-      cancel-in-progress: false
-    outputs:
-      slug: ${{ steps.slug.outputs.slug }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fetch sorter branches
+        run: git fetch origin '+refs/heads/pr-sorter/*:refs/remotes/origin/pr-sorter/*'
 
       - uses: actions/setup-node@v6
         with:
@@ -33,125 +37,171 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build
+      - name: Compile Pages index helper
+        run: npx tsc dev/pagesIndexWriter.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig
+
+      - name: Build main and all sorter branches
+        shell: bash
         env:
           VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
-
-      - name: Compute slug
-        id: slug
-        shell: bash
         run: |
-          branch="${GITHUB_REF_NAME#pr-sorter/}"
-          slug="$(printf '%s' "$branch" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
-          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
 
-      - name: Write meta.json
-        run: |
-          node .github/scripts/write-meta.mjs "${{ steps.slug.outputs.slug }}"
-          cp customize/favicon.ico dist/favicon.ico
-          mkdir -p dist/customize
-          cp customize/favicon.ico dist/customize/favicon.ico
+          rm -rf pages-dist dist
+          node .pages-tools/pagesIndexWriter.js init
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sorter-${{ steps.slug.outputs.slug }}
-          path: dist/
-          retention-days: 1
+          git for-each-ref --format='%(refname:short)' refs/remotes/origin/pr-sorter/ | while read -r remote_branch; do
+            branch="${remote_branch#origin/}"
+            sorter="${branch#pr-sorter/}"
+            slug="$(printf '%s' "$sorter" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
 
-  deploy-sorter:
-    needs: build-sorter
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref_name, 'pr-sorter/')
-    runs-on: ubuntu-latest
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: sorter-${{ needs.build-sorter.outputs.slug }}
-          path: dist/
+            rm -rf customize dist "pages-dist/$slug"
+            git checkout "origin/$branch" -- customize
+            node .pages-tools/pagesIndexWriter.js add "$slug"
 
-      - name: Deploy sorter
+            npm run build
+            mkdir -p "pages-dist/$slug"
+            cp -a dist/. "pages-dist/$slug/"
+            mkdir -p "pages-dist/$slug/customize"
+            cp customize/favicon.ico "pages-dist/$slug/customize/favicon.ico"
+          done
+
+          node .pages-tools/pagesIndexWriter.js write
+          git checkout HEAD -- customize
+          rm -rf dist
+          VITE_SORTER_INDEX=true npm run build
+          cp -a dist/. pages-dist/
+
+      - name: Deploy all builds
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: dist
-          destination_dir: ${{ needs.build-sorter.outputs.slug }}
-          keep_files: true
+          publish_dir: pages-dist
 
-  cleanup-sorter:
-    if: github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'pr-sorter/')
-    runs-on: ubuntu-latest
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Compute slug
-        id: slug
-        shell: bash
-        run: |
-          branch="${{ github.event.ref }}"
-          branch="${branch#pr-sorter/}"
-          slug="$(printf '%s' "$branch" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
-          echo "slug=$slug" >> "$GITHUB_OUTPUT"
-
-      - name: Remove sorter from gh-pages
-        shell: bash
-        run: |
-          git fetch origin gh-pages
-          git worktree add /tmp/gh-pages origin/gh-pages
-          if [ -d "/tmp/gh-pages/${{ steps.slug.outputs.slug }}" ]; then
-            cd /tmp/gh-pages
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-            git rm -rf "${{ steps.slug.outputs.slug }}"
-            git commit -m "Remove sorter: ${{ steps.slug.outputs.slug }}"
-            git push origin HEAD:gh-pages
-          fi
-
-  update-homepage:
-    needs: [deploy-sorter, cleanup-sorter]
-    concurrency:
-      group: pages-homepage
-      cancel-in-progress: false
-    if: |
-      always() &&
-      (
-        (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref_name == 'main' || startsWith(github.ref_name, 'pr-sorter/')) ||
-        (github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'pr-sorter/'))
-      ) &&
-      (needs.deploy-sorter.result == 'success' || needs.deploy-sorter.result == 'skipped') &&
-      (needs.cleanup-sorter.result == 'success' || needs.cleanup-sorter.result == 'skipped')
+  build-and-deploy-sorter:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref_name, 'pr-sorter/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch sorter branches
+        run: git fetch origin '+refs/heads/pr-sorter/*:refs/remotes/origin/pr-sorter/*'
 
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: npm
 
-      - name: Generate homepage
+      - run: npm ci
+
+      - name: Compile Pages index helper
+        run: npx tsc dev/pagesIndexWriter.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig
+
+      - name: Build sorter branch and index
+        shell: bash
+        env:
+          VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
         run: |
-          mkdir -p homepage-dist gh-pages-content
-          git fetch origin gh-pages || true
-          if git rev-parse origin/gh-pages >/dev/null 2>&1; then
-            git ls-tree -r origin/gh-pages --name-only | grep '/meta\.json$' | while IFS= read -r f; do
-              mkdir -p "gh-pages-content/$(dirname "$f")"
-              git show "origin/gh-pages:$f" > "gh-pages-content/$f"
-            done
-          fi
-          git fetch origin main
-          git show origin/main:customize/favicon.ico > homepage-dist/favicon.ico
-          node .github/scripts/generate-homepage.mjs gh-pages-content homepage-dist/index.html
+          set -euo pipefail
 
-      - name: Deploy homepage
+          branch="${GITHUB_REF_NAME}"
+          sorter="${branch#pr-sorter/}"
+          slug="$(printf '%s' "$sorter" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+
+          rm -rf customize dist pages-dist
+          git checkout "origin/$branch" -- customize
+
+          npm run build
+          mkdir -p "pages-dist/$slug"
+          cp -a dist/. "pages-dist/$slug/"
+          mkdir -p "pages-dist/$slug/customize"
+          cp customize/favicon.ico "pages-dist/$slug/customize/favicon.ico"
+
+          node .pages-tools/pagesIndexWriter.js init
+          git for-each-ref --format='%(refname:short)' refs/remotes/origin/pr-sorter/ | while read -r remote_branch; do
+            index_branch="${remote_branch#origin/}"
+            index_sorter="${index_branch#pr-sorter/}"
+            index_slug="$(printf '%s' "$index_sorter" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+
+            rm -rf customize
+            git checkout "origin/$index_branch" -- customize
+            node .pages-tools/pagesIndexWriter.js add "$index_slug"
+          done
+          node .pages-tools/pagesIndexWriter.js write
+
+          git checkout HEAD -- customize
+          rm -rf dist
+          VITE_SORTER_INDEX=true npm run build
+          cp -a dist/. pages-dist/
+
+      - name: Deploy sorter build
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: homepage-dist
+          publish_dir: pages-dist
           keep_files: true
+
+  cleanup-and-rebuild:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'pr-sorter/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fetch remaining sorter branches
+        run: git fetch origin '+refs/heads/pr-sorter/*:refs/remotes/origin/pr-sorter/*'
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compile Pages index helper
+        run: npx tsc dev/pagesIndexWriter.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig
+
+      - name: Rebuild all remaining sorters and index
+        shell: bash
+        env:
+          VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          rm -rf pages-dist dist
+          node .pages-tools/pagesIndexWriter.js init
+
+          git for-each-ref --format='%(refname:short)' refs/remotes/origin/pr-sorter/ | while read -r remote_branch; do
+            branch="${remote_branch#origin/}"
+            sorter="${branch#pr-sorter/}"
+            slug="$(printf '%s' "$sorter" | tr '/[:upper:]' '-[:lower:]' | tr -cd 'a-z0-9._-')"
+
+            rm -rf customize dist "pages-dist/$slug"
+            git checkout "origin/$branch" -- customize
+            node .pages-tools/pagesIndexWriter.js add "$slug"
+
+            npm run build
+            mkdir -p "pages-dist/$slug"
+            cp -a dist/. "pages-dist/$slug/"
+            mkdir -p "pages-dist/$slug/customize"
+            cp customize/favicon.ico "pages-dist/$slug/customize/favicon.ico"
+          done
+
+          node .pages-tools/pagesIndexWriter.js write
+          git checkout HEAD -- customize
+          rm -rf dist
+          VITE_SORTER_INDEX=true npm run build
+          cp -a dist/. pages-dist/
+
+      - name: Deploy updated builds
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: pages-dist

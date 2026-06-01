@@ -1,6 +1,10 @@
 node_modules/
 dist/
+pages-dist/
+.pages-tools/
 .vite/
 .idea/
 .env.local
+.logs/
+public/sorter-index.json
 scripts/

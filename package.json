@@ -2,12 +2,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "build:index": "tsc dev/buildSorterIndexPreview.ts --outDir .pages-tools --module NodeNext --target ES2022 --moduleResolution NodeNext --skipLibCheck --types node --ignoreConfig && node .pages-tools/buildSorterIndexPreview.js",
+    "preview": "npm run build:index && vite preview"
   },
   "engines": {
     "node": ">=24"
   },
   "devDependencies": {
+    "@types/node": "^25.9.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "typescript": "^6.0.3",

@@ -13,5 +13,5 @@
     "noEmit": true,
     "strict": true
   },
-  "include": ["src", "customize", "vite.config.ts"]
+  "include": ["src", "customize", "dev", "vite.config.ts"]
 }

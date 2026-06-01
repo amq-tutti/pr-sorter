@@ -1,11 +1,11 @@
 import type { SortPickEntry } from "../../sorter";
-import type { Song } from "../../songs";
+import type { ResolvedSong } from "../../songs";
 import type { SongScoresById } from "../types";
 
 type HistoryModalProps = {
   open: boolean;
   picks: SortPickEntry[];
-  songs: Song[];
+  songs: ResolvedSong[];
   scoresBySongId: SongScoresById;
   onClose(): void;
 };
@@ -65,7 +65,7 @@ export function HistoryModal({ open, picks, songs, scoresBySongId, onClose }: Hi
 }
 
 type HistorySongSideProps = {
-  song: Song | undefined;
+  song: ResolvedSong | undefined;
   side: "Left" | "Right";
   picked: boolean;
   score: string;
@@ -78,14 +78,14 @@ function HistorySongSide({ song, side, picked, score }: HistorySongSideProps) {
         <span>{side}</span>
         {picked ? <span className="history-song__picked">Picked</span> : null}
       </div>
-      <div className="history-song__anime">{song?.anime ?? "Unknown anime"}</div>
+      <div className="history-song__anime">{song?.anime ?? "Unknown song"}</div>
       <div className="history-song__name">{song?.name ?? "Unknown song"}</div>
       <div className="history-song__score">Score: {score}</div>
     </div>
   );
 }
 
-function formatScore(song: Song | undefined, scoresBySongId: SongScoresById): string {
+function formatScore(song: ResolvedSong | undefined, scoresBySongId: SongScoresById): string {
   if (!song) {
     return "unknown";
   }

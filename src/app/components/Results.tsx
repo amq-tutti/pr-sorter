@@ -1,9 +1,9 @@
 import { ranksBySongId, type SortState } from "../../sorter";
-import type { Song } from "../../songs";
+import type { ResolvedSong } from "../../songs";
 import type { SongScoresById } from "../types";
 
 type ResultsProps = {
-  songs: Song[];
+  songs: ResolvedSong[];
   sort: SortState;
   scoreEnabled: boolean;
   scoresBySongId: SongScoresById;
