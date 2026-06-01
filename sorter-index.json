@@ -48,5 +48,11 @@
       "description": "Party rank sorter for SI-VIS anime songs",
       "category": "Franchise"
     }
+  ],
+  "externalSources": [
+    {
+      "title": "Minigamer42",
+      "indexUrl": "https://minigamer42.github.io/pr-sorter/"
+    }
   ]
 }

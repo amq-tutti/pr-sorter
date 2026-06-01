@@ -1,250 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sorter Collection</title>
-  <link rel="icon" href="./favicon.ico">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background-image: url("https://images3.alphacoders.com/132/1322308.jpeg");
-      background-color: #001a3f;
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 24px;
-    }
-    .surface {
-      background: rgba(20, 30, 60, 0.85);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 15px;
-      padding: 40px;
-      width: 100%;
-      max-width: 900px;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-    }
-    h1 {
-      font-size: 2.4rem;
-      color: #a0ffac;
-      margin: 0 0 8px;
-      text-align: center;
-    }
-    .subtitle {
-      color: #cbd5e1;
-      margin: 0 0 36px;
-      font-size: 1rem;
-      text-align: center;
-    }
-    .chips-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 28px;
-    }
-    .chip {
-      padding: 6px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(160, 255, 172, 0.35);
-      background: rgba(0, 26, 63, 0.5);
-      color: #cbd5e1;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s, color 0.2s;
-    }
-    .chip:hover {
-      border-color: rgba(160, 255, 172, 0.7);
-      background: rgba(0, 40, 90, 0.7);
-      color: #a0ffac;
-    }
-    .chip.active {
-      border-color: #a0ffac;
-      background: rgba(160, 255, 172, 0.15);
-      color: #a0ffac;
-    }
-    .section-heading {
-      font-size: 1.2rem;
-      color: #a0ffac;
-      margin: 0 0 12px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(160, 255, 172, 0.2);
-    }
-    .section {
-      margin-bottom: 32px;
-    }
-    .section:last-child {
-      margin-bottom: 0;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 16px;
-    }
-    .card {
-      display: block;
-      padding: 20px;
-      background: rgba(0, 26, 63, 0.6);
-      border: 1px solid rgba(160, 255, 172, 0.2);
-      border-radius: 8px;
-      text-decoration: none;
-      backdrop-filter: blur(3px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      transition: border-color 0.2s, background 0.2s, transform 0.15s;
-    }
-    .card:hover {
-      border-color: rgba(160, 255, 172, 0.7);
-      background: rgba(0, 40, 90, 0.8);
-      transform: translateY(-2px);
-    }
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-    .card-favicon {
-      flex-shrink: 0;
-      border-radius: 3px;
-    }
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: #a0ffac;
-    }
-    .card-desc {
-      font-size: 0.9rem;
-      color: #cbd5e1;
-      line-height: 1.4;
-    }
-    .empty {
-      color: #cbd5e1;
-      font-size: 1.1rem;
-      text-align: center;
-      padding: 32px 0 8px;
-    }
-  </style>
+  <meta name="og:site_name" content="">
+  <meta name="og:description" content="">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="
+      default-src 'self';
+      script-src 'self' https://accounts.google.com https://apis.google.com https://www.youtube.com;
+      style-src 'self' 'unsafe-inline';
+      connect-src 'self' https: http://localhost:5173 http://127.0.0.1:5173 ws://localhost:5173 ws://127.0.0.1:5173;
+      frame-src https://accounts.google.com https://docs.google.com https://drive.google.com https://www.youtube.com https://www.youtube-nocookie.com;
+      img-src 'self' data: https:;
+      media-src 'self' https:;
+      font-src 'self';
+      object-src 'none';
+      base-uri 'self';
+    "
+  >
+  <title></title>
+  <link rel="shortcut icon" type="image/x-icon" href="./assets/favicon-BhjseKY9.ico?">
+  <script type="module" crossorigin src="./assets/index-BkG2v0NR.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CCv1ZMCm.css">
 </head>
+
 <body>
-  <div class="surface">
-    <h1>Sorter Collection</h1>
-    <p class="subtitle">Pick a sorter to get started.</p>
-    <div class="chips-bar">
-      <button class="chip active" data-filter="__all__">All</button>
-      <button class="chip" data-filter="Artist">Artist</button>
-      <button class="chip" data-filter="Franchise">Franchise</button>
-      <button class="chip" data-filter="Nominations">Nominations</button>
-      <button class="chip" data-filter="Seasonal">Seasonal</button>
-    </div>
-    <div id="sections">
-      <div class="section" data-section="Artist">
-        <h2 class="section-heading">Artist</h2>
-        <div class="grid">
-      <a class="card" href="./lozareena/">
-        <div class="card-header">
-          <img class="card-favicon" src="./lozareena/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">Lozareena</div>
-        </div>
-        <div class="card-desc">Party rank sorter for Lozareena anime songs</div>
-      </a>
-      <a class="card" href="./maaya-sakamoto/">
-        <div class="card-header">
-          <img class="card-favicon" src="./maaya-sakamoto/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">Maaya Sakamoto</div>
-        </div>
-        <div class="card-desc">Party rank sorter for Maaya Sakamoto anime songs</div>
-      </a>
-        </div>
-      </div>
-      <div class="section" data-section="Franchise">
-        <h2 class="section-heading">Franchise</h2>
-        <div class="grid">
-      <a class="card" href="./princession-orchestra/">
-        <div class="card-header">
-          <img class="card-favicon" src="./princession-orchestra/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">Princession Orchestra</div>
-        </div>
-        <div class="card-desc">Party rank sorter for all Princession Orchestra songs (anime + image songs)</div>
-      </a>
-      <a class="card" href="./si-vis/">
-        <div class="card-header">
-          <img class="card-favicon" src="./si-vis/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">SI-VIS</div>
-        </div>
-        <div class="card-desc">Party rank sorter for SI-VIS anime songs</div>
-      </a>
-        </div>
-      </div>
-      <div class="section" data-section="Nominations">
-        <h2 class="section-heading">Nominations</h2>
-        <div class="grid">
-      <a class="card" href="./2015/">
-        <div class="card-header">
-          <img class="card-favicon" src="./2015/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">2015 Nominations</div>
-        </div>
-        <div class="card-desc">Party rank sorter for nominated anime songs from 2015</div>
-      </a>
-      <a class="card" href="./movie-anisongs/">
-        <div class="card-header">
-          <img class="card-favicon" src="./movie-anisongs/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">Movie Anisongs</div>
-        </div>
-        <div class="card-desc">Party rank sorter for nominated songs from anime movies</div>
-      </a>
-        </div>
-      </div>
-      <div class="section" data-section="Seasonal">
-        <h2 class="section-heading">Seasonal</h2>
-        <div class="grid">
-      <a class="card" href="./2026-spring-eds/">
-        <div class="card-header">
-          <img class="card-favicon" src="./2026-spring-eds/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">2026 Spring EDs</div>
-        </div>
-        <div class="card-desc">Party rank sorter for all 2026 Spring anime endings</div>
-      </a>
-      <a class="card" href="./2026-spring-ops/">
-        <div class="card-header">
-          <img class="card-favicon" src="./2026-spring-ops/favicon.ico" alt="" width="20" height="20">
-          <div class="card-title">2026 Spring OPs</div>
-        </div>
-        <div class="card-desc">Party rank sorter for all 2026 Spring anime openings</div>
-      </a>
-        </div>
-      </div>
-    </div>
-  </div>
-  <script>
-    const chips = document.querySelectorAll('.chip');
-    const sections = document.querySelectorAll('.section');
-    chips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        chips.forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        const filter = chip.dataset.filter;
-        sections.forEach(section => {
-          if (filter === '__all__') {
-            section.hidden = false;
-            const h = section.querySelector('.section-heading');
-            if (h) h.hidden = false;
-          } else {
-            const match = section.dataset.section === filter;
-            section.hidden = !match;
-            if (match) {
-              const h = section.querySelector('.section-heading');
-              if (h) h.hidden = true;
-            }
-          }
-        });
-      });
-    });
-  </script>
+  <div id="root"></div>
+
 </body>
+
 </html>
