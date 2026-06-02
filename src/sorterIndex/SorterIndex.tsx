@@ -25,7 +25,7 @@ export function SorterIndex() {
     document.title = "Sorter Collection";
     document.body.classList.add("sorter-index-body");
     document.querySelector('meta[name="og:site_name"]')?.setAttribute("content", "Sorter Collection");
-    document.querySelector('meta[name="og:description"]')?.setAttribute("content", "Select a sorter to get started.");
+    document.querySelector('meta[name="og:description"]')?.setAttribute("content", "Select a collection and sorter to get started.");
 
     return () => {
       document.body.classList.remove("sorter-index-body");
@@ -69,6 +69,7 @@ export function SorterIndex() {
 
   const sections = buildSections(visibleSorters, categories, hasCategories, selectedCategory);
   const collectionName: string | undefined = import.meta.env.VITE_COLLECTION_NAME || undefined;
+  const titlePrefix = selectedSource === THIS_COLLECTION ? collectionName : selectedSource;
 
   return (
     <div className="main-page main-page--landing sorter-index-page">
@@ -77,9 +78,9 @@ export function SorterIndex() {
           <div className="sorter-index-panel">
             <div className="sorter-index-panel__intro">
               <h1 className="sorter-index-panel__title">
-                {collectionName ? `${collectionName} Sorter Collection` : "Sorter Collection"}
+                {titlePrefix ? `${titlePrefix} Sorter Collection` : "Sorter Collection"}
               </h1>
-              <p className="sorter-index-panel__subtitle">Select a sorter to get started.</p>
+              <p className="sorter-index-panel__subtitle">Select a collection and sorter to get started.</p>
             </div>
             {hasMultipleSources ? (
               <div className="sorter-index-panel__header">
