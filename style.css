@@ -34,11 +34,35 @@ body.sorter-index-body {
   overflow: hidden;
 }
 
+.sorter-index-panel__intro {
+  padding: 24px 24px 0;
+}
+
+.sorter-index-panel__title {
+  margin: 0 0 6px;
+  color: #a0ffac;
+  font-size: 2.4vh;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sorter-index-panel__subtitle {
+  margin: 0;
+  color: rgba(252, 255, 239, 0.65);
+  font-size: 1.8vh;
+}
+
 .sorter-index-panel__header {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 10px;
   padding: 14px 20px 0;
+}
+
+.sorter-index-source-label {
+  color: rgba(252, 255, 239, 0.65);
+  font-size: 1.6vh;
 }
 
 .sorter-index-source-select {

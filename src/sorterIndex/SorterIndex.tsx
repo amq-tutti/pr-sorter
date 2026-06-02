@@ -22,10 +22,10 @@ export function SorterIndex() {
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
 
   useEffect(() => {
-    document.title = "PR Sorters";
+    document.title = "Sorter Collection";
     document.body.classList.add("sorter-index-body");
-    document.querySelector('meta[name="og:site_name"]')?.setAttribute("content", "PR Sorters");
-    document.querySelector('meta[name="og:description"]')?.setAttribute("content", "Choose a sorter to start ranking.");
+    document.querySelector('meta[name="og:site_name"]')?.setAttribute("content", "Sorter Collection");
+    document.querySelector('meta[name="og:description"]')?.setAttribute("content", "Select a sorter to get started.");
 
     return () => {
       document.body.classList.remove("sorter-index-body");
@@ -68,15 +68,20 @@ export function SorterIndex() {
   const hasCategories = categories.length > 0;
 
   const sections = buildSections(visibleSorters, categories, hasCategories, selectedCategory);
+  const collectionName: string | undefined = import.meta.env.VITE_COLLECTION_NAME || undefined;
 
   return (
     <div className="main-page main-page--landing sorter-index-page">
-      <div className="title">Choose a sorter to start ranking.</div>
       {allSorters.length ? (
         <div className="sorter-index-sections">
           <div className="sorter-index-panel">
+            <div className="sorter-index-panel__intro">
+              <h1 className="sorter-index-panel__title">Sorter Collection</h1>
+              <p className="sorter-index-panel__subtitle">Select a sorter to get started.</p>
+            </div>
             {hasMultipleSources ? (
               <div className="sorter-index-panel__header">
+                <span className="sorter-index-source-label">Collection</span>
                 <select
                   className="sorter-index-source-select"
                   value={selectedSource}
@@ -84,7 +89,9 @@ export function SorterIndex() {
                 >
                   {sorterGroups.map((group) => (
                     <option key={group.title} value={group.title}>
-                      {group.title}
+                      {group.title === THIS_COLLECTION && collectionName
+                        ? `${THIS_COLLECTION} (${collectionName})`
+                        : group.title}
                     </option>
                   ))}
                 </select>
