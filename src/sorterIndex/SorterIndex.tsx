@@ -84,7 +84,6 @@ export function SorterIndex() {
             </div>
             {hasMultipleSources ? (
               <div className="sorter-index-panel__header">
-                <span className="sorter-index-source-label">Collection</span>
                 <select
                   className="sorter-index-source-select"
                   value={selectedSource}

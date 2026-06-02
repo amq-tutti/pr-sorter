@@ -64,7 +64,7 @@ body.sorter-index-body {
 
 .sorter-index-panel__header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   gap: 10px;
   padding: 14px 20px 0;
