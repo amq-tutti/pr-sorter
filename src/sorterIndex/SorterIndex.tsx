@@ -76,7 +76,9 @@ export function SorterIndex() {
         <div className="sorter-index-sections">
           <div className="sorter-index-panel">
             <div className="sorter-index-panel__intro">
-              <h1 className="sorter-index-panel__title">Sorter Collection</h1>
+              <h1 className="sorter-index-panel__title">
+                {collectionName ? `${collectionName} Sorter Collection` : "Sorter Collection"}
+              </h1>
               <p className="sorter-index-panel__subtitle">Select a sorter to get started.</p>
             </div>
             {hasMultipleSources ? (

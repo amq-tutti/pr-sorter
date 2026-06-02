@@ -44,6 +44,7 @@ jobs:
         shell: bash
         env:
           VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
+          VITE_COLLECTION_NAME: ${{ vars.VITE_COLLECTION_NAME }}
         run: |
           set -euo pipefail
 
@@ -105,6 +106,7 @@ jobs:
         shell: bash
         env:
           VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
+          VITE_COLLECTION_NAME: ${{ vars.VITE_COLLECTION_NAME }}
         run: |
           set -euo pipefail
 
@@ -171,6 +173,7 @@ jobs:
         shell: bash
         env:
           VITE_GOOGLE_API_KEY: ${{ vars.VITE_GOOGLE_API_KEY }}
+          VITE_COLLECTION_NAME: ${{ vars.VITE_COLLECTION_NAME }}
         run: |
           set -euo pipefail
 

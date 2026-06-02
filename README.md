@@ -288,6 +288,11 @@ In repository settings:
 1. Enable GitHub Pages.
 2. Set the Pages source to deploy from the `gh-pages` branch.
 3. If Google features are enabled, add the `VITE_GOOGLE_API_KEY` repository variable described in step 4.
+4. Optionally, add a `VITE_COLLECTION_NAME` repository variable to display your collection's name on the index page. For example, setting it to `Tutti` shows `Tutti Sorter Collection` as the page heading. To preview this locally, add it to `.env.local`:
+
+```bash
+VITE_COLLECTION_NAME=Tutti
+```
 
 ## Credit
 
