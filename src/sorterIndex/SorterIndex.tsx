@@ -13,8 +13,13 @@ type SorterIndexCatalog = {
   externalSources: ExternalSorterSource[];
 };
 
+const THIS_COLLECTION = "This Collection";
+const ALL_CATEGORY = "All";
+
 export function SorterIndex() {
   const [externalSorters, setExternalSorters] = useState<SorterIndexEntry[]>([]);
+  const [selectedSource, setSelectedSource] = useState(THIS_COLLECTION);
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
 
   useEffect(() => {
     document.title = "PR Sorters";
@@ -41,26 +46,91 @@ export function SorterIndex() {
     };
   }, []);
 
+  // Reset category filter whenever the selected source changes
+  useEffect(() => {
+    setSelectedCategory(ALL_CATEGORY);
+  }, [selectedSource]);
+
   const allSorters = [...sorters, ...externalSorters];
   const sorterGroups = groupSorters(allSorters);
+  const hasMultipleSources = sorterGroups.length > 1;
+
+  // Sorters for the selected source, sorted alphabetically by title
+  const selectedGroup = sorterGroups.find((g) => g.title === selectedSource);
+  const visibleSorters = [...(selectedGroup?.sorters ?? [])].sort((a, b) =>
+    a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+  );
+
+  // Distinct categories present in the selected source, sorted alphabetically
+  const categories = [
+    ...new Set(visibleSorters.flatMap((s) => (s.category ? [s.category] : []))),
+  ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  const hasCategories = categories.length > 0;
+
+  const sections = buildSections(visibleSorters, categories, hasCategories, selectedCategory);
 
   return (
     <div className="main-page main-page--landing sorter-index-page">
-      <div className="title">
-        Choose a sorter to start ranking.
-      </div>
+      <div className="title">Choose a sorter to start ranking.</div>
       {allSorters.length ? (
         <div className="sorter-index-sections">
-          {sorterGroups.map((group) => (
-            <section className="sorter-index-section" key={group.title}>
-              <h2 className="sorter-index-section__title">{group.title}</h2>
-              <div className="sorter-index-grid">
-                {group.sorters.map((sorter) => (
-                  <SorterCard sorter={sorter} key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`} />
+          <div className="sorter-index-panel">
+            {hasMultipleSources ? (
+              <div className="sorter-index-panel__header">
+                <select
+                  className="sorter-index-source-select"
+                  value={selectedSource}
+                  onChange={(e) => setSelectedSource(e.target.value)}
+                >
+                  {sorterGroups.map((group) => (
+                    <option key={group.title} value={group.title}>
+                      {group.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            {hasCategories ? (
+              <div className="sorter-index-chips">
+                {[ALL_CATEGORY, ...categories].map((cat) => (
+                  <button
+                    key={cat}
+                    className={`sorter-index-chip${selectedCategory === cat ? " sorter-index-chip--active" : ""}`}
+                    onClick={() => setSelectedCategory(cat)}
+                    type="button"
+                  >
+                    {cat}
+                  </button>
                 ))}
               </div>
-            </section>
-          ))}
+            ) : null}
+            <div className="sorter-index-panel__body">
+              {sections.map((section) =>
+                section.title !== null ? (
+                  <section className="sorter-index-section" key={section.title}>
+                    <h2 className="sorter-index-section__title">{section.title}</h2>
+                    <div className="sorter-index-grid">
+                      {section.sorters.map((sorter) => (
+                        <SorterCard
+                          sorter={sorter}
+                          key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ) : (
+                  <div className="sorter-index-grid" key="flat">
+                    {section.sorters.map((sorter) => (
+                      <SorterCard
+                        sorter={sorter}
+                        key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
+                      />
+                    ))}
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
         </div>
       ) : (
         <p className="sorter-index-empty">No sorters have been published yet.</p>
@@ -86,7 +156,8 @@ function SorterCard({ sorter }: { sorter: SorterIndexEntry }) {
 
 function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: SorterIndexEntry[] }[] {
   const localSorters = entries.filter((sorter) => !sorter.sourceTitle);
-  const groups = localSorters.length ? [{ title: "This Collection", sorters: localSorters }] : [];
+  // Always include "This Collection" as the first group, even if it's empty
+  const groups: { title: string; sorters: SorterIndexEntry[] }[] = [{ title: THIS_COLLECTION, sorters: localSorters }];
   const externalGroups = new Map<string, SorterIndexEntry[]>();
 
   for (const sorter of entries) {
@@ -104,6 +175,38 @@ function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: So
   }
 
   return groups;
+}
+
+function buildSections(
+  visibleSorters: SorterIndexEntry[],
+  categories: string[],
+  hasCategories: boolean,
+  selectedCategory: string,
+): { title: string | null; sorters: SorterIndexEntry[] }[] {
+  // No categories in this source — flat grid, no headers
+  if (!hasCategories) {
+    return [{ title: null, sorters: visibleSorters }];
+  }
+
+  const categoriesToShow = selectedCategory === ALL_CATEGORY ? categories : [selectedCategory];
+  const result: { title: string | null; sorters: SorterIndexEntry[] }[] = [];
+
+  for (const cat of categoriesToShow) {
+    const catSorters = visibleSorters.filter((s) => s.category === cat);
+    if (catSorters.length > 0) {
+      result.push({ title: cat, sorters: catSorters });
+    }
+  }
+
+  // Uncategorized section: only in "All" view, only when categorised sorters exist (hasCategories guarantees this)
+  if (selectedCategory === ALL_CATEGORY) {
+    const uncategorized = visibleSorters.filter((s) => !s.category);
+    if (uncategorized.length > 0) {
+      result.push({ title: "Uncategorized", sorters: uncategorized });
+    }
+  }
+
+  return result;
 }
 
 async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
