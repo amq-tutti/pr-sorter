@@ -17,15 +17,25 @@ body.sorter-index-body {
 }
 
 .sorter-index-page {
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .sorter-index-sections {
   width: min(900px, calc(100% - 40px));
-  margin: 18px auto 40px;
+  margin: 18px auto 24px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .sorter-index-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background: rgba(0, 16, 40, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 12px;
@@ -111,6 +121,9 @@ body.sorter-index-body {
 }
 
 .sorter-index-panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 20px;
 }
 
