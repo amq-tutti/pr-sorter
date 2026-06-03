@@ -962,18 +962,14 @@ body.sorter-index-body {
   color: #a0ffac;
   font-size: 2.1vh;
   font-weight: bold;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .playlist-song {
   margin-top: 5px;
   color: #fcffef;
   font-size: 2vh;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .playlist-score-field {
