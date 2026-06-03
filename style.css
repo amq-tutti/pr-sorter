@@ -855,7 +855,7 @@ body.sorter-index-body {
 }
 
 .music-card audio {
-  width: 70%;
+  width: 100%;
   height: 100%;
   border-radius: 8px;
 }
