@@ -61,6 +61,12 @@
       "category": "Franchise"
     },
     {
+      "slug": "uru",
+      "title": "Uru",
+      "description": "Party rank sorter for Uru anime songs",
+      "category": "Artist"
+    },
+    {
       "slug": "yorushika",
       "title": "Yorushika",
       "description": "Party rank sorter for Yorushika anime songs",
