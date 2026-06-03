@@ -191,9 +191,9 @@ export const songList = [
         "id": 24,
         "anime": "Mirai wa Onna no Tame ni Aru - M-03",
         "name": "\"Koi! Halation THE WAR ~extended version~ 2020 NEW MIX\" by Walküre",
-        "video": "https://www.youtube.com/watch?v=sqbOTo3c_n8",
+        "video": "https://files.catbox.moe/j8qzo9.mp4",
         "mp3": null,
-        "full": "https://www.youtube.com/watch?v=sqbOTo3c_n8"
+        "full": "https://files.catbox.moe/j8qzo9.mp4"
     },
     {
         "id": 25,
@@ -321,7 +321,7 @@ export const songList = [
         "name": "\"Walküre wa Uragiranai\" by Walküre",
         "video": "https://files.catbox.moe/yqg023.webm",
         "mp3": "https://files.catbox.moe/jwpqgt.mp3",
-        "full": "https://www.youtube.com/watch?v=TpEOPPLKE2M"
+        "full": "https://www.youtube.com/watch?v=Nh0M5x6F5Lk"
     },
     {
         "id": 41,
