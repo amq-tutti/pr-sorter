@@ -52,6 +52,12 @@
       "title": "SI-VIS",
       "description": "Party rank sorter for SI-VIS anime songs",
       "category": "Franchise"
+    },
+    {
+      "slug": "yorushika",
+      "title": "Yorushika",
+      "description": "Party rank sorter for Yorushika anime songs",
+      "category": "Artist"
     }
   ],
   "externalSources": [
