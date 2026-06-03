@@ -452,6 +452,20 @@ export function App({ config, songs }: AppProps) {
       });
   }
 
+  function copyScores(): void {
+    const lines = resolvedSongs.map((song) => String(scoresBySongId[song.id] ?? ""));
+
+    void navigator.clipboard
+      .writeText(lines.join("\n"))
+      .then(() => {
+        alert("Copied scores to clipboard!");
+      })
+      .catch((error: unknown) => {
+        console.error("Error copying scores:", error);
+        alert("Could not copy scores to clipboard.");
+      });
+  }
+
   function writeRanksToSheet(): void {
     if (screen !== "complete" || !sort) {
       return;
@@ -682,6 +696,7 @@ export function App({ config, songs }: AppProps) {
           onLoad={loadSort}
           onUndo={undoPick}
           onCopyRanks={copyRanks}
+          onCopyScores={copyScores}
           onWriteRanksToSheet={writeRanksToSheet}
           onSetupGoogleSheet={() => setSettingsOpen(true)}
         />
