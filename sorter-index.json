@@ -37,6 +37,12 @@
       "category": "Artist"
     },
     {
+      "slug": "macross-delta",
+      "title": "Macross Delta (Walküre)",
+      "description": "Party rank sorter for Macross Delta (Walküre) songs",
+      "category": "Franchise"
+    },
+    {
       "slug": "movie-anisongs",
       "title": "Movie Anisongs",
       "description": "Party rank sorter for nominated songs from anime movies",
