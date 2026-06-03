@@ -3,14 +3,95 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {"id": 1, "anime": "0-saiji Start Dash Monogatari Season 2 - Ending 1", "name": "\"Beyond the Trajectory\" by Chata", "video": "https://eudist.animemusicquiz.com/5u2mhk.webm", "mp3": null},
-    {"id": 2, "anime": "1-punkan dake Furete mo Ii yo... Share House no Himitsu Rule. - Ending 1", "name": "\"Session Sadame Night\" by Dai Takanashi", "video": "https://eudist.animemusicquiz.com/f23gq2.webm", "mp3": null},
-    {"id": 3, "anime": "A-Rank Party wo Ridatsu shita Ore wa, Moto Oshiego-tachi to Meikyuu Shinbu wo Mezasu. - Ending 1", "name": "\"Treasure Chest\" by Yuki Tanaka", "video": "https://eudist.animemusicquiz.com/agsvoz.webm", "mp3": "https://eudist.animemusicquiz.com/i3vp9q.mp3"},
-    {"id": 4, "anime": "Akuyaku Reijou Tensei Ojisan - Ending 1", "name": "\"Matsuken Samba II\" by Kazuhiko Inoue, M・A・O", "video": "https://eudist.animemusicquiz.com/e8q47f.webm", "mp3": "https://eudist.animemusicquiz.com/dje0hr.mp3"},
-    {"id": 5, "anime": "Amagami-san Chi no Enmusubi - Ending 2", "name": "\"Kamisama no Iu Toori!\" by ≠ME", "video": "https://eudist.animemusicquiz.com/p4etz1.webm", "mp3": "https://eudist.animemusicquiz.com/wz8z3p.mp3"},
-    {"id": 6, "anime": "Ameku Takao no Suiri Karte - Ending 1", "name": "\"will be fine\" by Gospellers feat. Anly", "video": "https://eudist.animemusicquiz.com/0spf2m.webm", "mp3": "https://eudist.animemusicquiz.com/iagxs7.mp3"},
-    {"id": 7, "anime": "Ao no Exorcist: Yosuga-hen - Ending 1", "name": "\"Overlap\" by Shiyui", "video": "https://eudist.animemusicquiz.com/3z1d8i.webm", "mp3": "https://eudist.animemusicquiz.com/162vdv.mp3"},
-    {"id": 8, "anime": "Ao no Hako - Ending 2", "name": "\"Contrast\" by TOMOO", "video": "https://eudist.animemusicquiz.com/qmcqk3.webm", "mp3": "https://eudist.animemusicquiz.com/l2sgqo.mp3"},
-    {"id": 9, "anime": "Ao no Miburo - Ending 2", "name": "\"Fragment\" by osage", "video": "https://eudist.animemusicquiz.com/8b8iva.webm", "mp3": "https://eudist.animemusicquiz.com/0yt4lm.mp3"},
-    {"id": 10, "anime": "Arafou Otoko no Isekai Tsuuhan - Ending 1", "name": "\"Aicraft\" by Kiminone", "video": "https://eudist.animemusicquiz.com/ohlrpc.webm", "mp3": "https://eudist.animemusicquiz.com/74jbjn.mp3"},
+   {
+        "id": 1,
+        "anime": "A Whisker Away - Ending 1",
+        "name": "\"Hana ni Bourei\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/5tlf31.webm",
+        "mp3": "https://naedist.animemusicquiz.com/1scpsy.mp3"
+    },
+    {
+        "id": 2,
+        "anime": "A Whisker Away - Ending 2",
+        "name": "\"Usotsuki\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/1dgqi0.webm",
+        "mp3": "https://naedist.animemusicquiz.com/6l9ctj.mp3"
+    },
+    {
+        "id": 3,
+        "anime": "A Whisker Away - Insert Song",
+        "name": "\"Yako\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/kc5chr.webm",
+        "mp3": "https://naedist.animemusicquiz.com/zy2i9w.mp3"
+    },
+    {
+        "id": 4,
+        "anime": "Kaina of the Great Snow Sea - Opening 1",
+        "name": "\"Telepath\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/jep75m.webm",
+        "mp3": "https://naedist.animemusicquiz.com/boeg6f.mp3"
+    },
+    {
+        "id": 5,
+        "anime": "Witch Hat Atelier - Opening 1",
+        "name": "\"Kaze no Anthem\" by Eve feat. suis from Yorushika",
+        "video": "https://naedist.animemusicquiz.com/0pjw0o.webm",
+        "mp3": "https://naedist.animemusicquiz.com/perzs3.mp3"
+    },
+    {
+        "id": 6,
+        "anime": "Orb: On the Movements of the Earth - Ending 1",
+        "name": "\"Aporia\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/3xj78t.webm",
+        "mp3": "https://naedist.animemusicquiz.com/5yhaw8.mp3"
+    },
+    {
+        "id": 7,
+        "anime": "Orb: On the Movements of the Earth - Ending 2",
+        "name": "\"Hebi\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/l9kjuo.webm",
+        "mp3": "https://naedist.animemusicquiz.com/l3ovhl.mp3"
+    },
+    {
+        "id": 8,
+        "anime": "The Dangers in My Heart - Opening 1",
+        "name": "\"Shayou\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/4sb978.webm",
+        "mp3": "https://naedist.animemusicquiz.com/gkqnz1.mp3"
+    },
+    {
+        "id": 9,
+        "anime": "Frieren: Beyond Journey's End - Opening 2",
+        "name": "\"Haru\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/jkbc3w.webm",
+        "mp3": "https://naedist.animemusicquiz.com/nwb51k.mp3"
+    },
+    {
+        "id": 10,
+        "anime": "Kaina of the Great Snow Sea: Star Sage - Ending 1",
+        "name": "\"Gekkouyoku\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/06jdmf.webm",
+        "mp3": "https://naedist.animemusicquiz.com/usnmti.mp3"
+    },
+    {
+        "id": 11,
+        "anime": "SHOSHIMIN: How to Become Ordinary - Opening 1",
+        "name": "\"Kaseijin\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/2ejeyw.webm",
+        "mp3": "https://naedist.animemusicquiz.com/y1yayt.mp3"
+    },
+    {
+        "id": 12,
+        "anime": "Dragonite and the Postman - Insert Song",
+        "name": "\"Kami Hikouki\" by suis from Yorushika × Evan Call",
+        "video": "https://naedist.animemusicquiz.com/rc7p6x.webm",
+        "mp3": "https://naedist.animemusicquiz.com/gte618.mp3"
+    },
+    {
+        "id": 13,
+        "anime": "Liar Game - Opening 1",
+        "name": "\"Abuku\" by Yorushika",
+        "video": "https://naedist.animemusicquiz.com/oy6uhu.webm",
+        "mp3": null
+    },
 ] satisfies Song[];
