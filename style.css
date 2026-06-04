@@ -264,6 +264,18 @@ body.sorter-index-body {
   z-index: 999;
 }
 
+.confirm-modal__message {
+  line-height: 1.5;
+  margin: 16px 0 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+}
+
 .option-group {
   margin: 20px 0;
   text-align: left;
@@ -675,6 +687,30 @@ body.sorter-index-body {
   align-content: start;
   padding-top: 24px;
   box-sizing: border-box;
+  position: relative;
+}
+
+.back-to-index {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 5px;
+  background-color: rgba(0, 26, 63, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #e5e5e5;
+  font-size: 2vh;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.back-to-index:hover {
+  background-color: rgba(0, 26, 63, 0.8);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .title {

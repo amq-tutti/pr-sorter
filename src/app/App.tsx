@@ -16,6 +16,7 @@ import {
 import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError } from "../google/types";
 import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from "../google/googleSheetsWriteback";
 import { resolveSongAnime, type Song } from "../songs";
+import { ConfirmModal } from "./components/ConfirmModal";
 import { Controls } from "./components/Controls";
 import { Duel } from "./components/Duel";
 import { HistoryModal } from "./components/HistoryModal";
@@ -60,6 +61,7 @@ export function App({ config, songs }: AppProps) {
   const [isHistoryOpen, setHistoryOpen] = useState(false);
   const [isSongListOpen, setSongListOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [isStartConfirmOpen, setStartConfirmOpen] = useState(false);
   const [isWritingSheet, setWritingSheet] = useState(false);
   const [isWritingSheetScores, setWritingSheetScores] = useState(false);
   const [isConnectingGoogleSheet, setConnectingGoogleSheet] = useState(false);
@@ -153,6 +155,21 @@ export function App({ config, songs }: AppProps) {
     setSort(nextSort);
     setScreen(screenFor(nextSort));
     storage.saveSort(nextSort);
+  }
+
+  // Starting overwrites the saved sort, so confirm first when there is saved progress to lose.
+  function requestStart(): void {
+    if (savedKind !== "none") {
+      setStartConfirmOpen(true);
+      return;
+    }
+
+    startSort();
+  }
+
+  function confirmStart(): void {
+    setStartConfirmOpen(false);
+    startSort();
   }
 
   function loadSort(): void {
@@ -672,7 +689,24 @@ export function App({ config, songs }: AppProps) {
         onWriteSheetScores={writeSongListScoresToSheet}
         onClose={() => setSongListOpen(false)}
       />
+      <ConfirmModal
+        open={isStartConfirmOpen}
+        title="Start a new sort?"
+        message={
+          savedKind === "complete"
+            ? "You have saved results from a completed sort. Starting over will permanently erase them."
+            : "You have a sort in progress. Starting over will permanently erase your saved progress — you won't be able to continue it."
+        }
+        confirmLabel="Start over"
+        onConfirm={confirmStart}
+        onCancel={() => setStartConfirmOpen(false)}
+      />
       <div className={`main-page ${screen === "landing" ? "main-page--landing" : ""}`}>
+        {screen === "landing" ? (
+          <a className="back-to-index" href="../">
+            ← All sorters
+          </a>
+        ) : null}
         {screen !== "sorting" ? (
           <div className="title" style={screen === "complete" ? { height: "3%" } : undefined}>
             {screen === "complete" ? "Results" : screen === "playlist" ? "Playlist" : landingTitle(savedKind)}
@@ -692,7 +726,7 @@ export function App({ config, songs }: AppProps) {
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenPlaylist={openPlaylist}
           onExitPlaylist={exitPlaylist}
-          onStart={startSort}
+          onStart={requestStart}
           onLoad={loadSort}
           onUndo={undoPick}
           onCopyRanks={copyRanks}
