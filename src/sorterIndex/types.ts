@@ -2,7 +2,8 @@ export type SorterIndexEntry = {
   slug: string;
   title: string;
   description: string;
-  category?: string;
+  tags?: string[];
+  deadline?: string;
   url?: string;
   iconUrl?: string;
   sourceTitle?: string;

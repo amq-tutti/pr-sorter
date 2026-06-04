@@ -61,9 +61,9 @@ export function SorterIndex() {
     a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
   );
 
-  // Distinct categories present in the selected source, sorted alphabetically
+  // Distinct tags present in the selected source, sorted alphabetically
   const categories = [
-    ...new Set(visibleSorters.flatMap((s) => (s.category ? [s.category] : []))),
+    ...new Set(visibleSorters.flatMap((s) => (Array.isArray(s.tags) ? s.tags : []))),
   ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   const hasCategories = categories.length > 0;
 
@@ -201,7 +201,8 @@ function buildSections(
   const result: { title: string | null; sorters: SorterIndexEntry[] }[] = [];
 
   for (const cat of categoriesToShow) {
-    const catSorters = visibleSorters.filter((s) => s.category === cat);
+    // A sorter appears under every tag it has, so a multi-tag sorter shows up in multiple sections
+    const catSorters = visibleSorters.filter((s) => (Array.isArray(s.tags) ? s.tags : []).includes(cat));
     if (catSorters.length > 0) {
       result.push({ title: cat, sorters: catSorters });
     }
@@ -209,7 +210,7 @@ function buildSections(
 
   // Uncategorized section: only in "All" view, only when categorised sorters exist (hasCategories guarantees this)
   if (selectedCategory === ALL_CATEGORY) {
-    const uncategorized = visibleSorters.filter((s) => !s.category);
+    const uncategorized = visibleSorters.filter((s) => !(Array.isArray(s.tags) && s.tags.length > 0));
     if (uncategorized.length > 0) {
       result.push({ title: "Uncategorized", sorters: uncategorized });
     }

@@ -5,7 +5,8 @@ export type SorterIndexEntry = {
   slug: string;
   title: string;
   description: string;
-  category?: string;
+  tags?: string[];
+  deadline?: string;
 };
 
 type ExternalSorterSource = {
@@ -26,6 +27,32 @@ export async function writePublicSorterIndexCatalog(sorters: SorterIndexEntry[])
 
 export function sortIndexEntries(entries: SorterIndexEntry[]): SorterIndexEntry[] {
   return entries.sort((left, right) => left.title.localeCompare(right.title, undefined, { sensitivity: "base" }));
+}
+
+export function readStringProperty(source: string, propertyName: string): string | null {
+  const match = new RegExp(`${propertyName}\\s*:\\s*(['"])((?:\\\\.|(?!\\1).)*)\\1`, "s").exec(source);
+  if (!match) {
+    return null;
+  }
+
+  return unescapeStringLiteral(match[2]);
+}
+
+export function readArrayProperty(source: string, propertyName: string): string[] | null {
+  const match = new RegExp(`${propertyName}\\s*:\\s*\\[([^\\]]*)\\]`, "s").exec(source);
+  if (!match) {
+    return null;
+  }
+
+  return [...match[1].matchAll(/(['"])((?:\\.|(?!\1).)*)\1/g)].map((item) => unescapeStringLiteral(item[2]));
+}
+
+function unescapeStringLiteral(value: string): string {
+  return value
+    .replace(/\\'/g, "'")
+    .replace(/\\"/g, '"')
+    .replace(/\\n/g, "\n")
+    .replace(/\\\\/g, "\\");
 }
 
 async function readExternalSources(): Promise<ExternalSorterSource[]> {

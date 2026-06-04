@@ -49,8 +49,14 @@ export const config = {
   localStoragePrefix: "your-party-rank-sorter",
   title: "Your Custom Party Rank Sorter",
   description: "Party rank sorter for your custom list of songs.",
+  // Optional. Each tag adds the sorter under that header on the collection homepage.
+  tags: ["Artist"],
+  // Optional voting deadline (ISO 8601). Written into the generated sorter-index.json.
+  deadline: "2026-06-05T21:59:00.000Z",
 } satisfies AppConfig;
 ```
+
+Optional `tags` group the sorter under one or more headers on the collection homepage (a sorter with two tags appears under both). Optional `deadline` is an ISO 8601 timestamp carried into the generated `sorter-index.json`.
 
 Change `localStoragePrefix` for each hosted sorter. Browser storage is shared by origin, so two sorters hosted under the same GitHub Pages site can collide if they use the same prefix.
 

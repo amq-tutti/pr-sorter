@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
+import { readArrayProperty, readStringProperty, writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
 
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
 const previewSlug = "test";
@@ -30,7 +30,17 @@ async function writePreviewSorterIndex(): Promise<void> {
   const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
   const title = readStringProperty(configSource, "title") ?? "Local Sorter";
   const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-  const localSorter = [{ slug: previewSlug, title, description }];
+  const tags = readArrayProperty(configSource, "tags") ?? undefined;
+  const deadline = readStringProperty(configSource, "deadline") ?? undefined;
+  const localSorter = [
+    {
+      slug: previewSlug,
+      title,
+      description,
+      ...(tags?.length ? { tags } : {}),
+      ...(deadline ? { deadline } : {}),
+    },
+  ];
 
   await mkdir(path.dirname(generatedModulePath), { recursive: true });
   await writeFile(
@@ -45,19 +55,6 @@ async function copyLocalFavicon(outputRoot: string): Promise<void> {
   const outputDir = path.join(outputRoot, "customize");
   await mkdir(outputDir, { recursive: true });
   await copyFile(path.resolve(process.cwd(), "customize", "favicon.ico"), path.join(outputDir, "favicon.ico"));
-}
-
-function readStringProperty(source: string, propertyName: string): string | null {
-  const match = new RegExp(`${propertyName}\\s*:\\s*(['"])((?:\\\\.|(?!\\1).)*)\\1`, "s").exec(source);
-  if (!match) {
-    return null;
-  }
-
-  return match[2]
-    .replace(/\\'/g, "'")
-    .replace(/\\"/g, '"')
-    .replace(/\\n/g, "\n")
-    .replace(/\\\\/g, "\\");
 }
 
 function withEnv(overrides: Record<string, string>): Record<string, string> {

@@ -2,7 +2,8 @@ export type AppConfig = {
   localStoragePrefix: string;
   title: string;
   description: string;
-  category?: string;
+  tags?: string[];
+  deadline?: string;
   fallbackAnimeName?: string;
   googleSheets?: GoogleSheetsConfig;
 };

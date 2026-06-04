@@ -1,6 +1,12 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { sortIndexEntries, type SorterIndexEntry, writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
+import {
+  readArrayProperty,
+  readStringProperty,
+  sortIndexEntries,
+  type SorterIndexEntry,
+  writePublicSorterIndexCatalog,
+} from "./sorterIndexCatalog.js";
 
 const manifestPath = path.resolve(process.cwd(), ".pages-tools", "sorters.json");
 const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
@@ -28,8 +34,15 @@ async function main(): Promise<void> {
     const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
     const title = readStringProperty(configSource, "title") ?? `${slug} Sorter`;
     const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-    const category = readStringProperty(configSource, "category") ?? undefined;
-    const nextEntry: SorterIndexEntry = { slug, title, description, ...(category ? { category } : {}) };
+    const tags = readArrayProperty(configSource, "tags") ?? undefined;
+    const deadline = readStringProperty(configSource, "deadline") ?? undefined;
+    const nextEntry: SorterIndexEntry = {
+      slug,
+      title,
+      description,
+      ...(tags?.length ? { tags } : {}),
+      ...(deadline ? { deadline } : {}),
+    };
     const nextManifest = [...manifest.filter((entry) => entry.slug !== slug), nextEntry].sort((left, right) =>
       left.title.localeCompare(right.title, undefined, { sensitivity: "base" }),
     );
@@ -68,17 +81,4 @@ async function writeGeneratedModule(manifest: SorterIndexEntry[]): Promise<void>
     `import type { SorterIndexEntry } from "./types";\n\nexport const sorters: SorterIndexEntry[] = ${JSON.stringify(manifest, null, 2)};\n`,
     "utf8",
   );
-}
-
-function readStringProperty(source: string, propertyName: string): string | null {
-  const match = new RegExp(`${propertyName}\\s*:\\s*(['"])((?:\\\\.|(?!\\1).)*)\\1`, "s").exec(source);
-  if (!match) {
-    return null;
-  }
-
-  return match[2]
-    .replace(/\\'/g, "'")
-    .replace(/\\"/g, '"')
-    .replace(/\\n/g, "\n")
-    .replace(/\\\\/g, "\\");
 }
