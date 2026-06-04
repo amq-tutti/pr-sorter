@@ -4,6 +4,7 @@ export type SorterIndexEntry = {
   description: string;
   tags?: string[];
   deadline?: string;
+  localStoragePrefix?: string;
   url?: string;
   iconUrl?: string;
   sourceTitle?: string;

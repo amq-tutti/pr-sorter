@@ -32,6 +32,7 @@ async function writePreviewSorterIndex(): Promise<void> {
   const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
   const tags = readArrayProperty(configSource, "tags") ?? undefined;
   const deadline = readStringProperty(configSource, "deadline") ?? undefined;
+  const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? undefined;
   const localSorter = [
     {
       slug: previewSlug,
@@ -39,6 +40,7 @@ async function writePreviewSorterIndex(): Promise<void> {
       description,
       ...(tags?.length ? { tags } : {}),
       ...(deadline ? { deadline } : {}),
+      ...(localStoragePrefix ? { localStoragePrefix } : {}),
     },
   ];
 

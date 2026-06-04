@@ -122,6 +122,7 @@ export function SorterIndex() {
                       {section.sorters.map((sorter) => (
                         <SorterCard
                           sorter={sorter}
+                          showLocalProgress={!sorter.sourceTitle}
                           key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
                         />
                       ))}
@@ -132,6 +133,7 @@ export function SorterIndex() {
                     {section.sorters.map((sorter) => (
                       <SorterCard
                         sorter={sorter}
+                        showLocalProgress={!sorter.sourceTitle}
                         key={`${sorter.sourceTitle ?? "local"}:${sorter.url ?? sorter.slug}`}
                       />
                     ))}
@@ -148,9 +150,11 @@ export function SorterIndex() {
   );
 }
 
-function SorterCard({ sorter }: { sorter: SorterIndexEntry }) {
+function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexEntry; showLocalProgress: boolean }) {
   const href = sorter.url ?? `${sorter.slug}/`;
   const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
+  const progress = showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null;
+  const deadline = formatDeadline(sorter.deadline);
 
   return (
     <a className="sorter-index-card" href={href}>
@@ -158,9 +162,121 @@ function SorterCard({ sorter }: { sorter: SorterIndexEntry }) {
       <div className="sorter-index-card__body">
         <h3>{sorter.title}</h3>
         <p>{sorter.description}</p>
+        {deadline ? (
+          <div className={`sorter-index-card__deadline sorter-index-card__deadline--${deadline.kind}`}>
+            <span className="sorter-index-card__deadline-label">Deadline</span>
+            <time dateTime={deadline.iso}>{deadline.absolute}</time>
+            <span>{deadline.relative}</span>
+          </div>
+        ) : null}
+        {progress ? (
+          <div className="sorter-index-card__progress" aria-label={`${progress.label}: ${progress.percent}%`}>
+            <div className="sorter-index-card__progress-header">
+              <span>{progress.label}</span>
+              <span>{progress.percent}%</span>
+            </div>
+            <div className="sorter-index-card__progress-track">
+              <div className="sorter-index-card__progress-fill" style={{ width: `${progress.percent}%` }} />
+            </div>
+          </div>
+        ) : null}
       </div>
     </a>
   );
+}
+
+type SorterProgress = {
+  percent: number;
+  label: string;
+  kind: "in-progress" | "complete";
+};
+
+function loadSorterProgress(localStoragePrefix: string): SorterProgress | null {
+  const raw = localStorage.getItem(`${localStoragePrefix}:sort`);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!isStoredSortState(value)) {
+      return null;
+    }
+
+    if (value.current === null && value.groups.length === 1) {
+      return { percent: 100, label: "Complete", kind: "complete" };
+    }
+
+    if (value.pickedCount <= 0 && value.history.length === 0) {
+      return null;
+    }
+
+    const percent = Math.max(1, Math.min(99, Math.floor((value.pickedCount * 100) / Math.max(1, value.estimatedBattles))));
+    return { percent, label: "In progress", kind: "in-progress" };
+  } catch {
+    return null;
+  }
+}
+
+function isStoredSortState(value: unknown): value is {
+  groups: unknown[];
+  current: unknown;
+  pickedCount: number;
+  estimatedBattles: number;
+  history: unknown[];
+} {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray((value as { groups?: unknown }).groups) &&
+    "current" in value &&
+    typeof (value as { pickedCount?: unknown }).pickedCount === "number" &&
+    typeof (value as { estimatedBattles?: unknown }).estimatedBattles === "number" &&
+    Array.isArray((value as { history?: unknown }).history)
+  );
+}
+
+function formatDeadline(deadline: string | undefined): {
+  iso: string;
+  absolute: string;
+  relative: string;
+  kind: "future" | "soon" | "past";
+} | null {
+  if (!deadline) {
+    return null;
+  }
+
+  const date = new Date(deadline);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const diffMs = date.getTime() - Date.now();
+
+  return {
+    iso: date.toISOString(),
+    absolute: new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date),
+    relative: formatRelativeDeadline(date),
+    kind: diffMs < 0 ? "past" : diffMs < 7 * 24 * 60 * 60 * 1000 ? "soon" : "future",
+  };
+}
+
+function formatRelativeDeadline(date: Date): string {
+  const diffMs = date.getTime() - Date.now();
+  const absMinutes = Math.floor(Math.abs(diffMs) / (60 * 1000));
+  const days = Math.floor(absMinutes / (24 * 60));
+  const hours = Math.floor((absMinutes % (24 * 60)) / 60);
+  const minutes = absMinutes % 60;
+  const parts = [days > 0 ? `${days}d` : null, days > 0 || hours > 0 ? `${hours}h` : null, `${minutes}m`];
+  const difference = parts.filter((part): part is string => part !== null).join(" ");
+
+  return diffMs < 0 ? `${difference} ago` : `${difference} left`;
 }
 
 function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: SorterIndexEntry[] }[] {

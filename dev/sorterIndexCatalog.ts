@@ -7,6 +7,7 @@ export type SorterIndexEntry = {
   description: string;
   tags?: string[];
   deadline?: string;
+  localStoragePrefix?: string;
 };
 
 type ExternalSorterSource = {

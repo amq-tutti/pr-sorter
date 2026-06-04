@@ -36,12 +36,14 @@ async function main(): Promise<void> {
     const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
     const tags = readArrayProperty(configSource, "tags") ?? undefined;
     const deadline = readStringProperty(configSource, "deadline") ?? undefined;
+    const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? undefined;
     const nextEntry: SorterIndexEntry = {
       slug,
       title,
       description,
       ...(tags?.length ? { tags } : {}),
       ...(deadline ? { deadline } : {}),
+      ...(localStoragePrefix ? { localStoragePrefix } : {}),
     };
     const nextManifest = [...manifest.filter((entry) => entry.slug !== slug), nextEntry].sort((left, right) =>
       left.title.localeCompare(right.title, undefined, { sensitivity: "base" }),

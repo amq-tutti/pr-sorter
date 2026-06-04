@@ -234,6 +234,63 @@ body.sorter-index-body {
   margin: 0;
 }
 
+.sorter-index-card__deadline {
+  display: grid;
+  gap: 3px;
+  margin-top: 12px;
+  color: #f0fff2;
+  font-size: 1.5vh;
+  line-height: 1.25;
+}
+
+.sorter-index-card__deadline-label {
+  color: #a0ffac;
+  font-weight: bold;
+}
+
+.sorter-index-card__deadline--future,
+.sorter-index-card__deadline--future .sorter-index-card__deadline-label {
+  color: #b8ffbf;
+}
+
+.sorter-index-card__deadline--soon,
+.sorter-index-card__deadline--soon .sorter-index-card__deadline-label {
+  color: #ffd166;
+}
+
+.sorter-index-card__deadline--past,
+.sorter-index-card__deadline--past .sorter-index-card__deadline-label {
+  color: #ff9b9b;
+}
+
+.sorter-index-card__progress {
+  margin-top: 14px;
+}
+
+.sorter-index-card__progress-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  color: #dfffe4;
+  font-size: 1.45vh;
+  line-height: 1.2;
+}
+
+.sorter-index-card__progress-track {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.sorter-index-card__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #a0ffac;
+}
+
 .sorter-index-empty {
   margin: 24px auto 0;
   text-align: center;
