@@ -4,73 +4,97 @@
       "slug": "2015",
       "title": "2015 Nominations",
       "description": "Party rank sorter for nominated anime songs from 2015",
-      "category": "Nominations"
+      "tags": [
+        "Nominations"
+      ]
     },
     {
       "slug": "2026-spring-eds",
       "title": "2026 Spring EDs",
       "description": "Party rank sorter for all 2026 Spring anime endings",
-      "category": "Seasonal"
+      "tags": [
+        "Seasonal"
+      ]
     },
     {
       "slug": "2026-spring-ops",
       "title": "2026 Spring OPs",
       "description": "Party rank sorter for all 2026 Spring anime openings",
-      "category": "Seasonal"
+      "tags": [
+        "Seasonal"
+      ]
     },
     {
       "slug": "crystal-kay",
       "title": "Crystal Kay",
       "description": "Party rank sorter for Crystal Kay anime song",
-      "category": "Artist"
+      "tags": [
+        "Artist"
+      ]
     },
     {
       "slug": "lozareena",
       "title": "Lozareena",
       "description": "Party rank sorter for Lozareena anime songs",
-      "category": "Artist"
+      "tags": [
+        "Artist"
+      ]
     },
     {
       "slug": "maaya-sakamoto",
       "title": "Maaya Sakamoto",
       "description": "Party rank sorter for Maaya Sakamoto anime songs",
-      "category": "Artist"
+      "tags": [
+        "Artist"
+      ]
     },
     {
       "slug": "macross-delta",
       "title": "Macross Delta (Walküre)",
       "description": "Party rank sorter for Macross Delta (Walküre) songs",
-      "category": "Franchise"
+      "tags": [
+        "Franchise"
+      ]
     },
     {
       "slug": "movie-anisongs",
       "title": "Movie Anisongs",
       "description": "Party rank sorter for nominated songs from anime movies",
-      "category": "Nominations"
+      "tags": [
+        "Nominations"
+      ]
     },
     {
       "slug": "princession-orchestra",
       "title": "Princession Orchestra",
       "description": "Party rank sorter for all Princession Orchestra songs (anime + image songs)",
-      "category": "Franchise"
+      "tags": [
+        "Franchise"
+      ]
     },
     {
       "slug": "si-vis",
       "title": "SI-VIS",
       "description": "Party rank sorter for SI-VIS anime songs",
-      "category": "Franchise"
+      "tags": [
+        "Franchise"
+      ]
     },
     {
       "slug": "uru",
       "title": "Uru",
       "description": "Party rank sorter for Uru anime songs",
-      "category": "Artist"
+      "tags": [
+        "Artist"
+      ]
     },
     {
       "slug": "yorushika",
       "title": "Yorushika",
       "description": "Party rank sorter for Yorushika anime songs",
-      "category": "Artist"
+      "tags": [
+        "Artist"
+      ]
     }
   ],
   "externalSources": [
