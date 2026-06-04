@@ -6,7 +6,8 @@
       "description": "Party rank sorter for nominated anime songs from 2015",
       "tags": [
         "Nominations"
-      ]
+      ],
+      "deadline": "2026-06-13T22:00:00.000Z"
     },
     {
       "slug": "2026-spring-eds",
@@ -14,7 +15,8 @@
       "description": "Party rank sorter for all 2026 Spring anime endings",
       "tags": [
         "Seasonal"
-      ]
+      ],
+      "deadline": "2026-06-19T22:00:00.000Z"
     },
     {
       "slug": "2026-spring-ops",
@@ -22,7 +24,8 @@
       "description": "Party rank sorter for all 2026 Spring anime openings",
       "tags": [
         "Seasonal"
-      ]
+      ],
+      "deadline": "2026-06-19T22:00:00.000Z"
     },
     {
       "slug": "crystal-kay",
@@ -30,7 +33,8 @@
       "description": "Party rank sorter for Crystal Kay anime song",
       "tags": [
         "Artist"
-      ]
+      ],
+      "deadline": "2026-06-09T20:00:00.000Z"
     },
     {
       "slug": "lozareena",
@@ -38,7 +42,8 @@
       "description": "Party rank sorter for Lozareena anime songs",
       "tags": [
         "Artist"
-      ]
+      ],
+      "deadline": "2026-06-01T20:00:00.000Z"
     },
     {
       "slug": "maaya-sakamoto",
@@ -46,7 +51,8 @@
       "description": "Party rank sorter for Maaya Sakamoto anime songs",
       "tags": [
         "Artist"
-      ]
+      ],
+      "deadline": "2026-05-24T04:00:00.000Z"
     },
     {
       "slug": "macross-delta",
@@ -54,7 +60,8 @@
       "description": "Party rank sorter for Macross Delta (Walküre) songs",
       "tags": [
         "Franchise"
-      ]
+      ],
+      "deadline": "2026-07-03T22:00:00.000Z"
     },
     {
       "slug": "movie-anisongs",
@@ -62,7 +69,8 @@
       "description": "Party rank sorter for nominated songs from anime movies",
       "tags": [
         "Nominations"
-      ]
+      ],
+      "deadline": "2026-05-30T22:00:00.000Z"
     },
     {
       "slug": "princession-orchestra",
@@ -70,7 +78,8 @@
       "description": "Party rank sorter for all Princession Orchestra songs (anime + image songs)",
       "tags": [
         "Franchise"
-      ]
+      ],
+      "deadline": "2026-06-11T22:00:00.000Z"
     },
     {
       "slug": "si-vis",
@@ -78,7 +87,8 @@
       "description": "Party rank sorter for SI-VIS anime songs",
       "tags": [
         "Franchise"
-      ]
+      ],
+      "deadline": "2026-05-18T22:00:00.000Z"
     },
     {
       "slug": "uru",
@@ -86,7 +96,8 @@
       "description": "Party rank sorter for Uru anime songs",
       "tags": [
         "Artist"
-      ]
+      ],
+      "deadline": "2026-06-06T04:00:00.000Z"
     },
     {
       "slug": "yorushika",
@@ -94,7 +105,8 @@
       "description": "Party rank sorter for Yorushika anime songs",
       "tags": [
         "Artist"
-      ]
+      ],
+      "deadline": "2026-06-09T20:00:00.000Z"
     }
   ],
   "externalSources": [
