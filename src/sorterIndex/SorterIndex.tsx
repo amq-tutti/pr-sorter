@@ -18,6 +18,7 @@ const ALL_CATEGORY = "All";
 
 export function SorterIndex() {
   const [externalSorters, setExternalSorters] = useState<SorterIndexEntry[]>([]);
+  const [externalProgress, setExternalProgress] = useState<Map<string, SorterProgress>>(new Map());
   const [selectedSource, setSelectedSource] = useState(THIS_COLLECTION);
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
 
@@ -32,7 +33,15 @@ export function SorterIndex() {
     };
   }, []);
 
+  // Respond to cross-origin progress requests when our index is embedded in another collection's iframe.
+  useEffect(() => exposeSorterIndexProgressRequests(), []);
+
+  // Only the top-level page discovers/requests external progress; an embedded responder stays passive.
   useEffect(() => {
+    if (window.parent !== window) {
+      return;
+    }
+
     let cancelled = false;
 
     void discoverExternalSorters().then((nextExternalSorters) => {
@@ -46,12 +55,36 @@ export function SorterIndex() {
     };
   }, []);
 
+  // Fetch progress for each external collection over postMessage and merge it in as it arrives.
+  useEffect(() => {
+    let cancelled = false;
+    setExternalProgress(new Map());
+
+    void loadExternalSorterProgress(externalSorters, (sourceProgress) => {
+      if (!cancelled) {
+        setExternalProgress((currentProgress) => new Map([...currentProgress, ...sourceProgress]));
+      }
+    }).then((nextExternalProgress) => {
+      if (!cancelled) {
+        setExternalProgress(nextExternalProgress);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [externalSorters]);
+
   // Reset category filter whenever the selected source changes
   useEffect(() => {
     setSelectedCategory(ALL_CATEGORY);
   }, [selectedSource]);
 
-  const allSorters = [...sorters, ...externalSorters];
+  const externalSortersWithProgress = externalSorters.map((sorter): SorterIndexDisplayEntry => {
+    const progress = externalProgress.get(externalSorterProgressKey(sorter));
+    return progress ? { ...sorter, progress } : sorter;
+  });
+  const allSorters: SorterIndexDisplayEntry[] = [...sorters, ...externalSortersWithProgress];
   const sorterGroups = groupSorters(allSorters);
   const hasMultipleSources = sorterGroups.length > 1;
 
@@ -150,10 +183,10 @@ export function SorterIndex() {
   );
 }
 
-function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexEntry; showLocalProgress: boolean }) {
+function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexDisplayEntry; showLocalProgress: boolean }) {
   const href = sorter.url ?? `${sorter.slug}/`;
   const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
-  const progress = showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null;
+  const progress = sorter.progress ?? (showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null);
   const deadline = formatDeadline(sorter.deadline);
 
   return (
@@ -191,8 +224,12 @@ type SorterProgress = {
   kind: "in-progress" | "complete";
 };
 
-function loadSorterProgress(localStoragePrefix: string): SorterProgress | null {
-  const raw = localStorage.getItem(`${localStoragePrefix}:sort`);
+type SorterIndexDisplayEntry = SorterIndexEntry & {
+  progress?: SorterProgress;
+};
+
+function loadSorterProgress(localStoragePrefix: string, storage: Storage = localStorage): SorterProgress | null {
+  const raw = storage.getItem(`${localStoragePrefix}:sort`);
   if (!raw) {
     return null;
   }
@@ -279,11 +316,11 @@ function formatRelativeDeadline(date: Date): string {
   return diffMs < 0 ? `${difference} ago` : `${difference} left`;
 }
 
-function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: SorterIndexEntry[] }[] {
+function groupSorters(entries: SorterIndexDisplayEntry[]): { title: string; sorters: SorterIndexDisplayEntry[] }[] {
   const localSorters = entries.filter((sorter) => !sorter.sourceTitle);
   // Always include "This Collection" as the first group, even if it's empty
-  const groups: { title: string; sorters: SorterIndexEntry[] }[] = [{ title: THIS_COLLECTION, sorters: localSorters }];
-  const externalGroups = new Map<string, SorterIndexEntry[]>();
+  const groups: { title: string; sorters: SorterIndexDisplayEntry[] }[] = [{ title: THIS_COLLECTION, sorters: localSorters }];
+  const externalGroups = new Map<string, SorterIndexDisplayEntry[]>();
 
   for (const sorter of entries) {
     if (!sorter.sourceTitle) {
@@ -303,18 +340,18 @@ function groupSorters(entries: SorterIndexEntry[]): { title: string; sorters: So
 }
 
 function buildSections(
-  visibleSorters: SorterIndexEntry[],
+  visibleSorters: SorterIndexDisplayEntry[],
   categories: string[],
   hasCategories: boolean,
   selectedCategory: string,
-): { title: string | null; sorters: SorterIndexEntry[] }[] {
+): { title: string | null; sorters: SorterIndexDisplayEntry[] }[] {
   // No categories in this source — flat grid, no headers
   if (!hasCategories) {
     return [{ title: null, sorters: visibleSorters }];
   }
 
   const categoriesToShow = selectedCategory === ALL_CATEGORY ? categories : [selectedCategory];
-  const result: { title: string | null; sorters: SorterIndexEntry[] }[] = [];
+  const result: { title: string | null; sorters: SorterIndexDisplayEntry[] }[] = [];
 
   for (const cat of categoriesToShow) {
     // A sorter appears under every tag it has, so a multi-tag sorter shows up in multiple sections
@@ -468,6 +505,8 @@ function externalizeEntry(entry: SorterIndexEntry, indexUrl: URL, sourceTitle: s
     url: url.toString(),
     iconUrl: iconUrl.toString(),
     sourceTitle: entry.sourceTitle ?? sourceTitle,
+    sourceIndexUrl: indexUrl.toString(),
+    sourceSlug: entry.sourceSlug ?? entry.slug,
   };
 }
 
@@ -477,4 +516,338 @@ function normalizeCollectionUrl(url: URL): URL {
 
 function sameCollectionUrl(left: URL, right: URL): boolean {
   return normalizeCollectionUrl(left).toString() === normalizeCollectionUrl(right).toString();
+}
+
+// --- Cross-origin progress sharing -------------------------------------------------------------
+// Each collection's index page is both a requester (embeds other collections in hidden iframes to
+// read their progress) and a responder (when embedded, replies with its own localStorage progress
+// via the Storage Access API). The message protocol below must stay identical across collections.
+
+type SorterIndexProgressRequest = {
+  type: typeof sorterIndexProgressRequestType;
+  requestId: string;
+  sorters: { slug: string }[];
+};
+
+type SorterIndexProgressResponse = {
+  type: typeof sorterIndexProgressResponseType;
+  requestId: string;
+  progress: SorterIndexProgressResponseEntry[];
+};
+
+type SorterIndexProgressResponseEntry = {
+  slug?: string;
+  localStoragePrefix: string;
+  progress: SorterProgress | null;
+};
+
+type ExternalSorterProgressResult = {
+  status: "response" | "timeout";
+  progress: SorterIndexProgressResponseEntry[];
+};
+
+type StorageAccessDocument = Document & {
+  hasStorageAccess?: () => Promise<boolean>;
+  requestStorageAccess?: (types?: { localStorage?: boolean }) => Promise<void | { localStorage?: Storage }>;
+};
+
+const sorterIndexProgressRequestType = "pr-sorter:index-progress-request";
+const sorterIndexProgressResponseType = "pr-sorter:index-progress-response";
+const sorterIndexProgressReadyType = "pr-sorter:index-progress-ready";
+const externalProgressRequestTimeoutMs = 5000;
+
+function exposeSorterIndexProgressRequests(): () => void {
+  function handleMessage(event: MessageEvent<unknown>): void {
+    const request = parseSorterIndexProgressRequest(event.data);
+    if (!request || !event.source) {
+      return;
+    }
+
+    void respondToSorterIndexProgressRequest(event, request);
+  }
+
+  window.addEventListener("message", handleMessage);
+
+  if (window.parent !== window) {
+    const targetOrigin = parentMessageTargetOrigin();
+    window.parent.postMessage(
+      {
+        type: sorterIndexProgressReadyType,
+        origin: window.location.origin,
+      },
+      targetOrigin,
+    );
+  }
+
+  return () => {
+    window.removeEventListener("message", handleMessage);
+  };
+}
+
+async function respondToSorterIndexProgressRequest(event: MessageEvent<unknown>, request: SorterIndexProgressRequest): Promise<void> {
+  const requestedSorters = requestedSorterStorageTargets(request);
+  const storage = await progressStorageForResponder();
+  const progress = requestedSorters.map((sorter) => ({
+    slug: sorter.slug,
+    localStoragePrefix: sorter.localStoragePrefix,
+    progress: storage ? loadSorterProgress(sorter.localStoragePrefix, storage) : null,
+  }));
+  const response: SorterIndexProgressResponse = {
+    type: sorterIndexProgressResponseType,
+    requestId: request.requestId,
+    progress,
+  };
+
+  (event.source as Window).postMessage(response, event.origin === "null" ? "*" : event.origin);
+}
+
+function requestedSorterStorageTargets(request: SorterIndexProgressRequest): { slug?: string; localStoragePrefix: string }[] {
+  const localSortersBySlug = new Map(sorters.map((sorter) => [sorter.slug, sorter]));
+  const requestedTargets: { slug?: string; localStoragePrefix: string }[] = [];
+  const seenPrefixes = new Set<string>();
+
+  for (const item of request.sorters) {
+    const matchedSorter = localSortersBySlug.get(item.slug);
+    if (!matchedSorter) {
+      continue;
+    }
+
+    const localStoragePrefix = matchedSorter.localStoragePrefix ?? matchedSorter.slug;
+
+    if (localStoragePrefix && !seenPrefixes.has(localStoragePrefix)) {
+      seenPrefixes.add(localStoragePrefix);
+      requestedTargets.push({ slug: matchedSorter.slug, localStoragePrefix });
+    }
+  }
+
+  return requestedTargets;
+}
+
+function parseSorterIndexProgressRequest(value: unknown): SorterIndexProgressRequest | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const candidate = value as Partial<SorterIndexProgressRequest>;
+  if (candidate.type !== sorterIndexProgressRequestType || typeof candidate.requestId !== "string") {
+    return null;
+  }
+
+  if (!Array.isArray(candidate.sorters)) {
+    return null;
+  }
+
+  if (!candidate.sorters.every(isSorterIndexProgressRequestSorter)) {
+    return null;
+  }
+
+  return {
+    type: sorterIndexProgressRequestType,
+    requestId: candidate.requestId,
+    sorters: candidate.sorters,
+  };
+}
+
+function isSorterIndexProgressRequestSorter(value: unknown): value is { slug: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { slug?: unknown }).slug === "string"
+  );
+}
+
+async function progressStorageForResponder(): Promise<Storage | null> {
+  if (window.parent === window) {
+    return localStorage;
+  }
+
+  const storageAccessDocument = document as StorageAccessDocument;
+  if (!storageAccessDocument.requestStorageAccess) {
+    return null;
+  }
+
+  try {
+    const handle = await storageAccessDocument.requestStorageAccess({ localStorage: true });
+    return handle && typeof handle === "object" && handle.localStorage ? handle.localStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadExternalSorterProgress(
+  externalEntries: SorterIndexEntry[],
+  onSourceProgress?: (sourceProgress: Map<string, SorterProgress>) => void,
+): Promise<Map<string, SorterProgress>> {
+  const progressByKey = new Map<string, SorterProgress>();
+  const sourceGroups = new Map<string, SorterIndexEntry[]>();
+
+  for (const sorter of externalEntries) {
+    if (!sorter.sourceIndexUrl) {
+      continue;
+    }
+
+    const sourceSorters = sourceGroups.get(sorter.sourceIndexUrl) ?? [];
+    sourceSorters.push(sorter);
+    sourceGroups.set(sorter.sourceIndexUrl, sourceSorters);
+  }
+
+  await Promise.all(
+    [...sourceGroups].map(async ([sourceIndexUrl, sourceSorters]) => {
+      const result = await requestExternalSorterProgress(sourceIndexUrl, sourceSorters);
+      const progressBySlug = new Map(result.progress.map((entry) => [entry.slug, entry.progress]));
+      const sourceProgressByKey = new Map<string, SorterProgress>();
+
+      for (const sorter of sourceSorters) {
+        const sourceSlug = sorter.sourceSlug ?? sorter.slug;
+        const progress = progressBySlug.get(sourceSlug);
+        if (progress) {
+          progressByKey.set(externalSorterProgressKey(sorter), progress);
+          sourceProgressByKey.set(externalSorterProgressKey(sorter), progress);
+        }
+      }
+
+      onSourceProgress?.(sourceProgressByKey);
+    }),
+  );
+
+  return progressByKey;
+}
+
+function requestExternalSorterProgress(sourceIndexUrl: string, sourceSorters: SorterIndexEntry[]): Promise<ExternalSorterProgressResult> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const sourceOrigin = new URL(sourceIndexUrl).origin;
+    const requestId = crypto.randomUUID();
+    const iframe = document.createElement("iframe");
+    const requestedSlugs = sourceSorters.map((sorter) => sorter.sourceSlug ?? sorter.slug);
+    const timeout = window.setTimeout(() => {
+      finish("timeout", []);
+    }, externalProgressRequestTimeoutMs);
+
+    iframe.hidden = true;
+    iframe.tabIndex = -1;
+    iframe.src = sourceIndexUrl;
+
+    function finish(status: ExternalSorterProgressResult["status"], progress: SorterIndexProgressResponseEntry[]): void {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      window.clearTimeout(timeout);
+      window.removeEventListener("message", handleMessage);
+      iframe.remove();
+      resolve({ status, progress });
+    }
+
+    function handleMessage(event: MessageEvent<unknown>): void {
+      if (!isSorterIndexProgressMessage(event.data)) {
+        return;
+      }
+
+      if (event.origin !== sourceOrigin) {
+        return;
+      }
+
+      const iframeWindow = iframe.contentWindow;
+      if (!iframeWindow) {
+        return;
+      }
+
+      if (event.source !== iframeWindow) {
+        return;
+      }
+
+      if (isSorterIndexProgressReadyMessage(event.data)) {
+        iframeWindow.postMessage(
+          {
+            type: sorterIndexProgressRequestType,
+            requestId,
+            sorters: requestedSlugs.map((slug) => ({ slug })),
+          },
+          sourceOrigin,
+        );
+        return;
+      }
+
+      if (!isSorterIndexProgressResponse(event.data, requestId)) {
+        return;
+      }
+
+      finish("response", event.data.progress);
+    }
+
+    window.addEventListener("message", handleMessage);
+    document.body.append(iframe);
+  });
+}
+
+function isSorterIndexProgressMessage(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    ((value as { type?: unknown }).type === sorterIndexProgressRequestType ||
+      (value as { type?: unknown }).type === sorterIndexProgressResponseType ||
+      (value as { type?: unknown }).type === sorterIndexProgressReadyType)
+  );
+}
+
+function isSorterIndexProgressReadyMessage(value: unknown): value is { type: typeof sorterIndexProgressReadyType } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { type?: unknown }).type === sorterIndexProgressReadyType
+  );
+}
+
+function parentMessageTargetOrigin(): string {
+  try {
+    return document.referrer ? new URL(document.referrer).origin : "*";
+  } catch {
+    return "*";
+  }
+}
+
+function isSorterIndexProgressResponse(value: unknown, requestId: string): value is SorterIndexProgressResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<SorterIndexProgressResponse>;
+  return (
+    candidate.type === sorterIndexProgressResponseType &&
+    candidate.requestId === requestId &&
+    Array.isArray(candidate.progress) &&
+    candidate.progress.every(isSorterIndexProgressResponseEntry)
+  );
+}
+
+function isSorterIndexProgressResponseEntry(value: unknown): value is SorterIndexProgressResponseEntry {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<SorterIndexProgressResponseEntry>;
+  return (
+    typeof candidate.localStoragePrefix === "string" &&
+    (candidate.slug === undefined || typeof candidate.slug === "string") &&
+    (candidate.progress === null || isSorterProgress(candidate.progress))
+  );
+}
+
+function isSorterProgress(value: unknown): value is SorterProgress {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<SorterProgress>;
+  return (
+    typeof candidate.percent === "number" &&
+    typeof candidate.label === "string" &&
+    (candidate.kind === "in-progress" || candidate.kind === "complete")
+  );
+}
+
+function externalSorterProgressKey(sorter: SorterIndexEntry): string {
+  return `${sorter.sourceIndexUrl ?? ""}:${sorter.sourceSlug ?? sorter.slug}`;
 }
