@@ -55,9 +55,9 @@ export const songList = [
         "id": 7,
         "anime": "Zettai Reido θ Novatic/Hametsu no Junjou - M-04",
         "name": "\"GIRAFFE BLUES ~Freyja Solo~\" by Minori Suzuki",
-        "video": "https://www.youtube.com/watch?v=2YKaJkQqGDk",
+        "video": "https://www.youtube.com/watch?v=B46gb9UHKY4",
         "mp3": null,
-        "full": "https://www.youtube.com/watch?v=2YKaJkQqGDk"
+        "full": "https://www.youtube.com/watch?v=B46gb9UHKY4"
     },
     {
         "id": 8,
@@ -65,7 +65,7 @@ export const songList = [
         "name": "\"GIRAFFE BLUES ~Mikumo Solo~\" by JUNNA",
         "video": "https://files.catbox.moe/5cq3gu.webm",
         "mp3": "https://files.catbox.moe/1k7exs.mp3",
-        "full": "https://www.youtube.com/watch?v=QpCPPFGlHAs"
+        "full": "https://www.youtube.com/watch?v=FqPEgZbam8I"
     },
     {
         "id": 9,
@@ -345,7 +345,7 @@ export const songList = [
         "name": "\"'Heinz vs. Yami_Q_ray\" by Melody Chubak vs Yami_Q_ray",
         "video": "https://files.catbox.moe/hdg1ss.webm",
         "mp3": "https://files.catbox.moe/6p4xua.mp3",
-        "full": "https://www.youtube.com/watch?v=yOpa8_qocxA"
+        "full": "https://www.youtube.com/watch?v=hMNRbIUC8nU"
     },
     {
         "id": 44,
@@ -353,7 +353,7 @@ export const songList = [
         "name": "\"Kirei na Hana ni wa Doku ga Aru\" by Yami_Q_ray",
         "video": "https://files.catbox.moe/3tuh6z.webm",
         "mp3": "https://files.catbox.moe/0njfcr.mp3",
-        "full": "https://www.youtube.com/watch?v=1TJTXz8pe4Y"
+        "full": "https://www.youtube.com/watch?v=3iNQ1yU01sA"
     },
     {
         "id": 45,
@@ -361,7 +361,7 @@ export const songList = [
         "name": "\"Ringo no Uta\" by Minori Suzuki",
         "video": "https://files.catbox.moe/o81b1t.webm",
         "mp3": "https://files.catbox.moe/2gvfs5.mp3",
-        "full": "https://www.youtube.com/watch?v=_dVt1pwMZDQ"
+        "full": "https://www.youtube.com/watch?v=HgA_SUorb-w"
     },
     {
         "id": 46,
@@ -377,7 +377,7 @@ export const songList = [
         "name": "\"Kuchibiru no Toushou\" by Walküre",
         "video": "https://files.catbox.moe/gglakk.webm",
         "mp3": "https://files.catbox.moe/v8xboa.mp3",
-        "full": "https://www.youtube.com/watch?v=2kFygY13Jyw"
+        "full": "https://www.youtube.com/watch?v=HkQTKsc2d_g"
     },
     {
         "id": 48,
@@ -401,7 +401,7 @@ export const songList = [
         "name": "\"ALIVE~Inori no Uta~\" by Walküre",
         "video": "https://files.catbox.moe/j831cz.webm",
         "mp3": "https://files.catbox.moe/faovi2.mp3",
-        "full": "https://www.youtube.com/watch?v=qW4-APvGEEg"
+        "full": "https://www.youtube.com/watch?v=hguuFzBXsP0"
     },
     {
         "id": 51,
