@@ -287,8 +287,8 @@ export const songList = [
         "id": 36,
         "anime": "Princession Orchestra - Insert",
         "name": "\"Super Higher Dreamer!!! -Ver. for My Precious-\" by Hikari Aimura",
-        "video": "https://eudist.animemusicquiz.com/5eozyi7xgloh6l7n.webm",
-        "mp3": "https://eudist.animemusicquiz.com/bycw05.mp3",
+        "video": "https://eudist.animemusicquiz.com/r3jdrfhwu23t3ke6.webm",
+        "mp3": null,
         "full": "https://music.youtube.com/watch?v=g8XNOR0FzCI"
     },
     {
