@@ -167,6 +167,16 @@ type NativeMediaProps = {
 
 function NativeMedia({kind, src, type, autoPlay = false, paused = false, title, onPlay, onPause, onEnded}: NativeMediaProps): ReactElement {
     const mediaRef = useRef<HTMLMediaElement | null>(null);
+    const pauseTimerRef = useRef<number | null>(null);
+
+    const cancelPendingPause = () => {
+        if (pauseTimerRef.current !== null) {
+            clearTimeout(pauseTimerRef.current);
+            pauseTimerRef.current = null;
+        }
+    };
+
+    useEffect(() => cancelPendingPause, []);
 
     useEffect(() => {
         if (paused) {
@@ -184,7 +194,28 @@ function NativeMedia({kind, src, type, autoPlay = false, paused = false, title, 
         });
     }, [autoPlay, paused]);
 
+    const handlePlay = () => {
+        cancelPendingPause();
+        onPlay?.();
+    };
+
+    const handlePause = () => {
+        // Dragging the seek bar fires a transient pause→play in some browsers; defer the
+        // pause so the "playing" highlight doesn't blink. If the media is still seeking or
+        // already playing again when the timer fires, it wasn't a real pause.
+        cancelPendingPause();
+        const media = mediaRef.current;
+        pauseTimerRef.current = window.setTimeout(() => {
+            pauseTimerRef.current = null;
+            if (media && (media.seeking || !media.paused)) {
+                return;
+            }
+            onPause?.();
+        }, 200);
+    };
+
     const handleEnded = () => {
+        cancelPendingPause();
         onPause?.();
         onEnded?.();
     };
@@ -197,8 +228,8 @@ function NativeMedia({kind, src, type, autoPlay = false, paused = false, title, 
                 }}
                 controls
                 autoPlay={autoPlay}
-                onPlay={onPlay}
-                onPause={onPause}
+                onPlay={handlePlay}
+                onPause={handlePause}
                 onEnded={handleEnded}
                 title={title}
             >
@@ -214,8 +245,8 @@ function NativeMedia({kind, src, type, autoPlay = false, paused = false, title, 
             }}
             controls
             autoPlay={autoPlay}
-            onPlay={onPlay}
-            onPause={onPause}
+            onPlay={handlePlay}
+            onPause={handlePause}
             onEnded={handleEnded}
             title={title}
         >
