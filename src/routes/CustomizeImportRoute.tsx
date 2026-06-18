@@ -1,6 +1,6 @@
-import { config } from "../../customize/config";
-import { CustomizeImporter } from "../customizeImporter/CustomizeImporter";
+import { config } from '../../customize/config';
+import { CustomizeImporter } from '../customizeImporter/CustomizeImporter';
 
 export function CustomizeImportRoute() {
-  return <CustomizeImporter config={config} />;
+    return <CustomizeImporter config={config}/>;
 }

@@ -1,10 +1,11 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { loadCustomizeConfig, loadCustomizeSongCount, serializedDeadline, serializedTags } from "./configLoader.js";
 import {
-  readArrayProperty,
-  readStringProperty,
   sortIndexEntries,
   type SorterIndexEntry,
+  type SorterIndexManifestEntry,
+  visibleIndexEntries,
   writePublicSorterIndexCatalog,
 } from "./sorterIndexCatalog.js";
 
@@ -31,19 +32,20 @@ async function main(): Promise<void> {
     }
 
     const manifest = await readManifest();
-    const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
-    const title = readStringProperty(configSource, "title") ?? `${slug} Sorter`;
-    const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-    const tags = readArrayProperty(configSource, "tags") ?? undefined;
-    const deadline = readStringProperty(configSource, "deadline") ?? undefined;
-    const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? undefined;
-    const nextEntry: SorterIndexEntry = {
+    const config = await loadCustomizeConfig();
+    const songCount = await loadCustomizeSongCount();
+    const deadline = serializedDeadline(config);
+    const tags = serializedTags(config);
+    const nextEntry = {
       slug,
-      title,
-      description,
-      ...(tags?.length ? { tags } : {}),
+      title: config.title,
+      description: config.description,
+      ...(tags ? { tags } : {}),
+      localStoragePrefix: config.localStoragePrefix,
+      ...(config.rankSupported === false ? { rankSupported: false } : {}),
+      ...(config.rankSupported === false ? { songCount } : {}),
+      ...(config.hide ? { hide: true } : {}),
       ...(deadline ? { deadline } : {}),
-      ...(localStoragePrefix ? { localStoragePrefix } : {}),
     };
     const nextManifest = [...manifest.filter((entry) => entry.slug !== slug), nextEntry].sort((left, right) =>
       left.title.localeCompare(right.title, undefined, { sensitivity: "base" }),
@@ -55,23 +57,24 @@ async function main(): Promise<void> {
 
   if (command === "write") {
     const manifest = sortIndexEntries(await readManifest());
+    const visibleManifest = visibleIndexEntries(manifest);
     await writePublicSorterIndexCatalog(manifest);
-    await writeGeneratedModule(manifest);
+    await writeGeneratedModule(visibleManifest);
     return;
   }
 
   throw new Error(`Unknown command: ${command ?? "(none)"}`);
 }
 
-async function readManifest(): Promise<SorterIndexEntry[]> {
+async function readManifest(): Promise<SorterIndexManifestEntry[]> {
   try {
-    return JSON.parse(await readFile(manifestPath, "utf8")) as SorterIndexEntry[];
+    return JSON.parse(await readFile(manifestPath, "utf8")) as SorterIndexManifestEntry[];
   } catch {
     return [];
   }
 }
 
-async function writeManifest(manifest: SorterIndexEntry[]): Promise<void> {
+async function writeManifest(manifest: SorterIndexManifestEntry[]): Promise<void> {
   await mkdir(path.dirname(manifestPath), { recursive: true });
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 }

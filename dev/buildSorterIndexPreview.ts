@@ -1,10 +1,9 @@
 import { spawn } from "node:child_process";
-import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
-import { readArrayProperty, readStringProperty, writePublicSorterIndexCatalog } from "./sorterIndexCatalog.js";
+import { previewSlug, writeLocalPreviewSorterIndex } from "./localPreviewIndex.js";
+import { validateSongMedia } from "./validateSongMedia.js";
 
-const generatedModulePath = path.resolve(process.cwd(), "src", "sorterIndex", "sorters.generated.ts");
-const previewSlug = "test";
 const sorterPreviewDist = path.resolve(process.cwd(), ".pages-tools", "local-sorter-dist");
 const finalDist = path.resolve(process.cwd(), "dist");
 
@@ -16,41 +15,16 @@ void main().catch((error: unknown) => {
 async function main(): Promise<void> {
   await rm(sorterPreviewDist, { recursive: true, force: true });
 
+  await validateSongMedia();
+
   await runNodeBin("node_modules/typescript/bin/tsc", ["--noEmit"], childEnv());
   await runNodeBin("node_modules/vite/bin/vite.js", ["build", "--outDir", sorterPreviewDist, "--emptyOutDir"], childEnv());
   await copyLocalFavicon(sorterPreviewDist);
 
-  await writePreviewSorterIndex();
+  await writeLocalPreviewSorterIndex();
   await runNodeBin("node_modules/vite/bin/vite.js", ["build", "--outDir", finalDist, "--emptyOutDir"], withEnv({ VITE_SORTER_INDEX: "true" }));
 
   await cp(sorterPreviewDist, path.join(finalDist, previewSlug), { recursive: true });
-}
-
-async function writePreviewSorterIndex(): Promise<void> {
-  const configSource = await readFile(path.resolve(process.cwd(), "customize", "config.ts"), "utf8");
-  const title = readStringProperty(configSource, "title") ?? "Local Sorter";
-  const description = readStringProperty(configSource, "description") ?? "Open this sorter.";
-  const tags = readArrayProperty(configSource, "tags") ?? undefined;
-  const deadline = readStringProperty(configSource, "deadline") ?? undefined;
-  const localStoragePrefix = readStringProperty(configSource, "localStoragePrefix") ?? undefined;
-  const localSorter = [
-    {
-      slug: previewSlug,
-      title,
-      description,
-      ...(tags?.length ? { tags } : {}),
-      ...(deadline ? { deadline } : {}),
-      ...(localStoragePrefix ? { localStoragePrefix } : {}),
-    },
-  ];
-
-  await mkdir(path.dirname(generatedModulePath), { recursive: true });
-  await writeFile(
-    generatedModulePath,
-    `import type { SorterIndexEntry } from "./types";\n\nexport const sorters: SorterIndexEntry[] = ${JSON.stringify(localSorter, null, 2)};\n`,
-    "utf8",
-  );
-  await writePublicSorterIndexCatalog(localSorter);
 }
 
 async function copyLocalFavicon(outputRoot: string): Promise<void> {

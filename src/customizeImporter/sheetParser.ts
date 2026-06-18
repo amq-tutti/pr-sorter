@@ -1,9 +1,11 @@
 import type { SheetGridCell } from '../google/sheetsClient';
-import type { Song } from '../songs';
+import type { SongData } from '../songs';
 
 export type ParsedSheetCustomize = {
-    songs: Song[];
-    rankColumnHeader: string;
+    songs: SongData[];
+    idColumnHeader: string;
+    rankSupported: boolean;
+    rankColumnHeader?: string;
     scoreColumnHeader?: string;
 };
 
@@ -18,20 +20,34 @@ export type SheetHeaders = {
 };
 
 const HEADER_ALIASES: Record<SheetColumnKey, readonly string[]> = {
-    id: ['ID', 'Id', 'id'],
+    id: ['ID', 'Song ID', '#'],
     anime: ['Anime Name', 'Anime', 'Series', 'Show'],
     song: ['Song', 'Song Name', 'Title', 'Song Info', 'Name'],
     video: ['Video', 'Video Link', 'Video Link (if exists)', 'Link'],
     mp3: ['MP3', 'MP3 Link', 'mp3 Links', 'Audio', 'Audio Link', 'Song Link'],
     full: ['Full', 'Full Song', 'Full Link'],
-    rank: ['Rank', 'rank'],
-    score: ['Score (optional)', 'Score', 'score'],
+    rank: ['Rank'],
+    score: ['Score (optional)', 'Score'],
 };
 
 export function inspectSheetHeaders(rows: SheetGridCell[][]): SheetHeaders {
-    const headerRowIndex = rows.findIndex((row) => row.some((cell) => cell.value.trim().toLowerCase() === 'id'));
+    let bestHeaderMatch = {index: -1, score: 0};
+
+    rows.forEach((row, index) => {
+        const rowHeaders = row.map((cell) => cell.value.trim());
+        if (rowHeaders.filter(Boolean).length < 2) {
+            return;
+        }
+
+        const score = countDetectedHeaders(rowHeaders);
+        if (score > bestHeaderMatch.score) {
+            bestHeaderMatch = {index, score};
+        }
+    });
+
+    const headerRowIndex = bestHeaderMatch.index;
     if (headerRowIndex === -1) {
-        throw new Error('Could not find a header row containing "ID".');
+        throw new Error('Could not find a header row.');
     }
 
     const headers = (rows[headerRowIndex] ?? []).map((cell) => cell.value.trim());
@@ -52,6 +68,10 @@ export function inspectSheetHeaders(rows: SheetGridCell[][]): SheetHeaders {
     };
 }
 
+function countDetectedHeaders(headers: string[]): number {
+    return Object.values(HEADER_ALIASES).filter((aliases) => findHeaderName(headers, aliases) !== null).length;
+}
+
 export function parseSheetGrid(
     rows: SheetGridCell[][],
     headers: SheetHeaders,
@@ -64,11 +84,15 @@ export function parseSheetGrid(
         video: optionalColumn(headers.headers, mapping.video),
         mp3: optionalColumn(headers.headers, mapping.mp3),
         full: optionalColumn(headers.headers, mapping.full),
-        rank: requireColumn(headers.headers, mapping.rank, 'Rank'),
+        rank: optionalColumn(headers.headers, mapping.rank),
         score: optionalColumn(headers.headers, mapping.score),
     };
 
-    const songs: Song[] = [];
+    if (columns.rank === null && columns.score === null) {
+        throw new Error('Missing required header: Rank or Score.');
+    }
+
+    const songs: SongData[] = [];
     const seenIds = new Set<number>();
 
     for (let rowIndex = headers.headerRowIndex + 1; rowIndex < rows.length; rowIndex += 1) {
@@ -122,7 +146,9 @@ export function parseSheetGrid(
 
     return {
         songs: [...songs].sort((left, right) => left.id - right.id),
-        rankColumnHeader: mapping.rank ?? 'Rank',
+        idColumnHeader: mapping.id ?? 'ID',
+        rankSupported: Boolean(mapping.rank),
+        rankColumnHeader: mapping.rank || undefined,
         scoreColumnHeader: mapping.score || undefined,
     };
 }

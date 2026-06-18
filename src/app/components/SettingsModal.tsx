@@ -1,4 +1,6 @@
-import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings } from '../types';
+import { useRef } from 'react';
+import type { LegacySorterSaveInfo } from '../legacySorterMigration';
+import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings, SorterAutoPlayMode } from '../types';
 
 type SettingsModalProps = {
     open: boolean;
@@ -8,22 +10,34 @@ type SettingsModalProps = {
     googleSheetsDisabledReason: string | null;
     googleSpreadsheetSelection: GoogleSpreadsheetSelection | null;
     isConnectingGoogleSheet: boolean;
+    legacySorterSaveInfo: LegacySorterSaveInfo | null;
     onClose(): void;
     onChange(settings: Settings): void;
     onChooseGoogleSheet(): void;
     onClearGoogleSheet(): void;
+    onExportSorterState(): void;
+    onImportSorterState(file: File): void;
+    onMigrateLegacySorterSave(): void;
 };
 
 const regions: { value: Region; label: string }[] = [
     {value: 'eu', label: 'Europe'},
     {value: 'naw', label: 'NA West'},
-    {value: 'nae', label: 'NA East'}
+    {value: 'nae', label: 'NA East'},
 ];
 
 const mediaFormats: { value: MediaFormat; label: string }[] = [
     {value: 'video', label: 'Video'},
     {value: 'audio', label: 'Audio'},
-    {value: 'full', label: 'Full songs'}
+    {value: 'full', label: 'Full songs'},
+];
+
+const sorterAutoPlayModes: { value: SorterAutoPlayMode; label: string }[] = [
+    {value: 'off', label: 'Off'},
+    {value: 'left', label: 'Left'},
+    {value: 'right', label: 'Right'},
+    {value: 'picked', label: 'Picked side'},
+    {value: 'higher-score', label: 'Higher score'},
 ];
 
 export function SettingsModal({
@@ -34,11 +48,17 @@ export function SettingsModal({
     googleSheetsDisabledReason,
     googleSpreadsheetSelection,
     isConnectingGoogleSheet,
+    legacySorterSaveInfo,
     onClose,
     onChange,
     onChooseGoogleSheet,
-    onClearGoogleSheet
+    onClearGoogleSheet,
+    onExportSorterState,
+    onImportSorterState,
+    onMigrateLegacySorterSave,
 }: SettingsModalProps) {
+    const importInputRef = useRef<HTMLInputElement | null>(null);
+
     if (!open) {
         return null;
     }
@@ -93,12 +113,31 @@ export function SettingsModal({
                                 const value = event.currentTarget.valueAsNumber;
                                 onChange({
                                     ...settings,
-                                    autoSkipScoreDifference: Number.isFinite(value) ? Math.min(10, Math.max(0, value)) : 10
+                                    autoSkipScoreDifference: Number.isFinite(value) ? Math.min(10, Math.max(0, value)) : 10,
                                 });
                             }}
                         />
                     </div>
                 ) : null}
+                <div className="option-group">
+                    <p>
+                        Sorter autoplay:
+                        <span className="help-icon"
+                              data-tooltip="Chooses which song starts autoplay for each comparison. After that, autoplay swaps between the two songs until sorting moves to another comparison."
+                              aria-label="Sorter autoplay help"
+                        >?</span>
+                    </p>
+                    {sorterAutoPlayModes.map((mode) => (
+                        <button
+                            key={mode.value}
+                            className={`option-button${settings.sorterAutoPlayMode === mode.value ? ' active' : ''}`}
+                            type="button"
+                            onClick={() => onChange({...settings, sorterAutoPlayMode: mode.value})}
+                        >
+                            {mode.label}
+                        </button>
+                    ))}
+                </div>
                 {googleSheetsConfigured ? (
                     <div className="option-group">
                         <p>Google Sheet:</p>
@@ -136,6 +175,47 @@ export function SettingsModal({
                         ) : null}
                     </div>
                 ) : null}
+                <div className="option-group">
+                    <p>Sorter state:</p>
+                    <button className="option-button" type="button" onClick={onExportSorterState}>
+                        Export
+                    </button>
+                    <button className="option-button" type="button" onClick={() => importInputRef.current?.click()}>
+                        Import
+                    </button>
+                    {legacySorterSaveInfo ? (
+                        <>
+                            <div className="setting-value">
+                                Legacy save found at {legacySorterSaveInfo.legacyPrefix}*
+                                {legacySorterSaveInfo.complete ? ' (complete)' : ' (in progress)'}.
+                                {!legacySorterSaveInfo.compatible && legacySorterSaveInfo.reason ? (
+                                    <span className="setting-warning"> {legacySorterSaveInfo.reason}</span>
+                                ) : null}
+                            </div>
+                            <button
+                                className="option-button"
+                                type="button"
+                                onClick={onMigrateLegacySorterSave}
+                                disabled={!legacySorterSaveInfo.compatible}
+                            >
+                                Migrate Legacy Save
+                            </button>
+                        </>
+                    ) : null}
+                    <input
+                        ref={importInputRef}
+                        className="state-file-input"
+                        type="file"
+                        accept="application/json,.json"
+                        onChange={(event) => {
+                            const file = event.currentTarget.files?.[0] ?? null;
+                            event.currentTarget.value = '';
+                            if (file) {
+                                onImportSorterState(file);
+                            }
+                        }}
+                    />
+                </div>
                 <button className="close-button" type="button" onClick={onClose}>
                     Close
                 </button>
