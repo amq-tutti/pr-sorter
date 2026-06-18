@@ -1,13 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import type { Plugin } from 'vite';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { localCustomizeWriter } from './dev/localCustomizeWriter';
+import { externalSorterSources } from './src/sorterIndex/externalSorterSources';
+import type { Plugin } from 'vite';
 
-const activeRoute = process.env.VITE_SORTER_INDEX === 'true'
-    ? '/src/routes/SorterIndexRoute.tsx'
-    : '/src/routes/SorterAppRoute.tsx';
+const activeRoute = process.env.VITE_PAGES_PREVIEW === 'true'
+    ? '/src/routes/PagesPreviewRoute.tsx'
+    : process.env.VITE_SORTER_INDEX === 'true'
+        ? '/src/routes/SorterIndexRoute.tsx'
+        : '/src/routes/SorterAppRoute.tsx';
 
 export default defineConfig({
     base: './',
@@ -16,11 +17,9 @@ export default defineConfig({
             'active-route': activeRoute,
         },
     },
-    plugins: [react(), localCustomizeWriter(), externalSorterSourceFrameSrc()],
+    plugins: [react(), localCustomizeWriter(), externalSorterSourceFrameSrc(), pagesPreviewAssetRewrite()],
 });
 
-// Merge the external sorter collection origins (from externalSorterSources.json) into the CSP
-// frame-src at build time, so the index can embed them in hidden iframes for cross-origin progress.
 function externalSorterSourceFrameSrc(): Plugin {
     return {
         name: 'external-sorter-source-frame-src',
@@ -42,27 +41,39 @@ function externalSorterSourceFrameSrc(): Plugin {
 }
 
 function externalSorterSourceOrigins(): string[] {
-    try {
-        const sourcesPath = path.resolve(process.cwd(), 'src', 'sorterIndex', 'externalSorterSources.json');
-        const parsed = JSON.parse(readFileSync(sourcesPath, 'utf8')) as unknown;
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
+    return externalSorterSources
+        .map((source) => {
+            try {
+                return new URL(source.indexUrl).origin;
+            } catch {
+                return null;
+            }
+        })
+        .filter((origin): origin is string => origin !== null);
+}
 
-        return parsed
-            .map((source) => {
-                if (typeof source !== 'object' || source === null || typeof (source as { indexUrl?: unknown }).indexUrl !== 'string') {
-                    return null;
+function pagesPreviewAssetRewrite(): Plugin {
+    return {
+        name: 'pages-preview-asset-rewrite',
+        configureServer(server) {
+            if (process.env.VITE_PAGES_PREVIEW !== 'true') {
+                return;
+            }
+
+            server.middlewares.use((request, _response, next) => {
+                if (!request.url) {
+                    next();
+                    return;
                 }
 
-                try {
-                    return new URL((source as { indexUrl: string }).indexUrl).origin;
-                } catch {
-                    return null;
+                if (request.url === '/test/style.css') {
+                    request.url = '/style.css';
+                } else if (request.url.startsWith('/test/customize/')) {
+                    request.url = request.url.slice('/test'.length);
                 }
-            })
-            .filter((origin): origin is string => origin !== null);
-    } catch {
-        return [];
-    }
+
+                next();
+            });
+        },
+    };
 }

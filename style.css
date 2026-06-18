@@ -321,16 +321,16 @@ body.sorter-index-body {
   z-index: 999;
 }
 
-.confirm-modal__message {
-  line-height: 1.5;
-  margin: 16px 0 0;
-}
-
 .modal-actions {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-top: 24px;
+}
+
+.confirm-modal__message {
+  line-height: 1.5;
+  margin: 16px 0 0;
 }
 
 .option-group {
@@ -391,6 +391,10 @@ body.sorter-index-body {
   color: #ffffff;
 }
 
+.setting-warning {
+  color: #ffd166;
+}
+
 .setting-number-input {
   width: 90px;
   margin-left: 8px;
@@ -401,6 +405,10 @@ body.sorter-index-body {
   background: rgba(255, 255, 255, 0.95);
   color: #001a3f;
   text-align: right;
+}
+
+.state-file-input {
+  display: none;
 }
 
 .help-icon {
@@ -736,7 +744,8 @@ body.sorter-index-body {
 
 .main-page {
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   align-content: center;
 }
 
@@ -744,30 +753,6 @@ body.sorter-index-body {
   align-content: start;
   padding-top: 24px;
   box-sizing: border-box;
-  position: relative;
-}
-
-.back-to-index {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 5px;
-  background-color: rgba(0, 26, 63, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #e5e5e5;
-  font-size: 2vh;
-  text-decoration: none;
-  transition: background-color 160ms ease, border-color 160ms ease;
-}
-
-.back-to-index:hover {
-  background-color: rgba(0, 26, 63, 0.8);
-  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .title {
@@ -789,17 +774,27 @@ body.sorter-index-body {
 }
 
 .button-container {
-  height: 5%;
+  min-height: 5%;
   box-sizing: border-box;
   text-align: center;
   display: flex;
   padding: 20px;
   justify-content: center;
   flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   align-items: center;
 }
 
+.button-container .basic-button {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .basic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: #40ab47a6;
   color: #e5e5e5;
   border: none;
@@ -810,6 +805,8 @@ body.sorter-index-body {
   height: 2em;
   margin-left: 10px;
   margin-right: 10px;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .basic-button:hover {
@@ -843,9 +840,63 @@ body.sorter-index-body {
   box-sizing: border-box;
 }
 
+.music-card-wrapper {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  row-gap: 20px;
+  width: 45%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.music-card-wrapper__songs {
+  display: grid;
+  row-gap: 20px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 0 0;
+}
+
+.music-card-wrapper.grid-2 .music-card-wrapper__songs {
+  grid-template-rows: repeat(2, auto);
+}
+
+.music-card-wrapper.grid-3 .music-card-wrapper__songs {
+  grid-template-rows: repeat(3, auto);
+}
+
+.music-card-wrapper.grid-4 .music-card-wrapper__songs {
+  grid-template-rows: repeat(4, auto);
+}
+
+.music-card-wrapper .music-card {
+  width: 100%;
+}
+
+.music-card-wrapper__song-anchor {
+  min-width: 0;
+}
+
+.music-card-wrapper__controls {
+  display: grid;
+  gap: 8px;
+  padding: 28px 20px 20px;
+  border-radius: 0 0 8px 8px;
+  background: rgba(0, 26, 63, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.music-card-wrapper__score {
+  height: 44px;
+  margin: 0;
+}
+
 .music-card {
   padding: 20px;
   width: 48%;
+  min-width: 0;
+  border: 1px solid transparent;
   background: rgba(0, 26, 63, 0.6);
   text-align: center;
   border-radius: 8px;
@@ -854,11 +905,19 @@ body.sorter-index-body {
   backdrop-filter: blur(3px);
 }
 
+.music-card--playing {
+  border-color: rgba(160, 255, 172, 0.72);
+  background: rgba(45, 106, 79, 0.22);
+}
+
 .music-card .anime {
   align-content: center;
   font-size: 2.2vh;
   color: #a0ffac;
   height: 10%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .music-card .song {
@@ -870,9 +929,11 @@ body.sorter-index-body {
   color: #fcffef;
   height: 10%;
   min-width: 0;
+  overflow: hidden;
 }
 
 .song__name {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -922,11 +983,53 @@ body.sorter-index-body {
   box-sizing: border-box;
 }
 
+.music-card-wrapper__controls > button {
+  padding: 10px;
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 2.5vh;
+  min-height: 60px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .music-card button:hover {
   background-color: #45a049;
 }
 
+.music-card-wrapper__controls > button:hover {
+  background-color: #45a049;
+}
+
+.music-card--compact {
+  min-height: 360px;
+}
+
+.music-card .media-remount-button {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  background-color: transparent;
+  color: #fcffef;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.music-card .media-remount-button:hover,
+.music-card .media-remount-button:focus-visible {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
 .music-card [data-slot="media"] {
+  position: relative;
   height: 70%;
 }
 
@@ -1011,6 +1114,16 @@ body.sorter-index-body {
   color: #ffffff;
 }
 
+.playlist-mode__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.playlist-mode__button:disabled:hover {
+  background: transparent;
+  color: #dbeafe;
+}
+
 .playlist-card {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;
@@ -1025,6 +1138,48 @@ body.sorter-index-body {
 
 .playlist-card--scored {
   grid-template-rows: minmax(0, 1fr) auto auto auto;
+}
+
+.playlist-card--group {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+.playlist-card--group.playlist-card--scored {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+.playlist-card:not(.playlist-card--group) > .playlist-media {
+  display: grid;
+  min-height: 0;
+}
+
+.playlist-card:not(.playlist-card--group) .playlist-media-entry {
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.playlist-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-height: 0;
+}
+
+.playlist-media-entry {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 6.8em;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.playlist-media-entry--active {
+  border-color: rgba(160, 255, 172, 0.72);
+  background: rgba(45, 106, 79, 0.16);
 }
 
 .playlist-media {
@@ -1047,22 +1202,38 @@ body.sorter-index-body {
 }
 
 .playlist-song-meta {
-  padding: 14px 0 8px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: start;
+  min-height: 0;
+  padding: 14px 0 0;
   text-align: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .playlist-anime {
   color: #a0ffac;
   font-size: 2.1vh;
   font-weight: bold;
-  overflow-wrap: break-word;
+  line-height: 1.2;
+  min-height: 1.2em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .playlist-song {
   margin-top: 5px;
   color: #fcffef;
   font-size: 2vh;
-  overflow-wrap: break-word;
+  line-height: 1.25;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .playlist-score-field {
@@ -1223,6 +1394,12 @@ table td {
   margin-top: 20px;
 }
 
+.import-actions .basic-button,
+.import-preview__header .basic-button {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .import-link {
   color: #bbf7d0;
 }
@@ -1265,6 +1442,15 @@ table td {
 
 .import-mapping {
   margin-top: 20px;
+}
+
+.import-mapping > .basic-button {
+  margin: 14px 0 0;
+}
+
+.import-mapping > .basic-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .import-mapping h2 {
@@ -1345,6 +1531,21 @@ table td {
   .playlist-card {
     height: calc(100% - 86px);
     padding: 12px;
+  }
+
+  .playlist-card--group,
+  .playlist-card--group.playlist-card--scored {
+    height: auto;
+    min-height: calc(100% - 86px);
+  }
+
+  .playlist-media-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .playlist-media-entry {
+    grid-template-rows: minmax(0, 1fr) 7.6em;
+    min-height: 320px;
   }
 
   .playlist-anime,
