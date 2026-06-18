@@ -187,7 +187,9 @@ export function SorterIndex() {
 function SorterCard({ sorter, showLocalProgress }: { sorter: SorterIndexDisplayEntry; showLocalProgress: boolean }) {
   const href = sorter.url ?? `${sorter.slug}/`;
   const iconUrl = sorter.iconUrl ?? `${sorter.slug}/customize/favicon.ico`;
-  const progress = sorter.progress ?? (showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null);
+  const rawProgress = sorter.progress ?? (showLocalProgress ? loadSorterProgress(sorter.localStoragePrefix ?? sorter.slug) : null);
+  // Hide progress for sorters that haven't been started (0% / "0 / N scored") — they're irrelevant until touched.
+  const progress = rawProgress && rawProgress.percent > 0 ? rawProgress : null;
   const deadline = formatDeadline(sorter.deadline);
 
   return (
