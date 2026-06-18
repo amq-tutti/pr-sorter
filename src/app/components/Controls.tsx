@@ -97,7 +97,7 @@ export function Controls({
     return (
         <div className="button-container">
             <a className="basic-button" href="../">
-                Overview
+                Sorter Index
             </a>
             {import.meta.env.DEV ? (
                 <a className="basic-button" href="../import">
