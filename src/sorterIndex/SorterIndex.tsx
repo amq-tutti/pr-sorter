@@ -6,6 +6,7 @@ type ExternalSorterSource = {
   title: string;
   indexUrl: string;
   catalogUrl?: string;
+  excludedSorterSlugs?: string[];
 };
 
 type SorterIndexCatalog = {
@@ -392,7 +393,9 @@ async function discoverExternalSorters(): Promise<SorterIndexEntry[]> {
     visitedSourceUrls.add(sourceKey);
 
     const sourceCatalog = await readExternalSourceCatalog(source, sourceUrl, visitedCatalogUrls);
+    const excludedSlugs = new Set(source.excludedSorterSlugs ?? []);
     const sourceSorters = sourceCatalog.sorters
+      .filter((entry) => !excludedSlugs.has(entry.slug))
       .map((entry) => externalizeEntry(entry, sourceUrl, source.title))
       .filter((entry) => {
         const key = entry.url ?? entry.slug;
@@ -484,15 +487,23 @@ function parseExternalSources(value: unknown): ExternalSorterSource[] {
     return [];
   }
 
-  return value.filter((source): source is ExternalSorterSource => {
-    return (
-      typeof source === "object" &&
-      source !== null &&
-      typeof (source as ExternalSorterSource).title === "string" &&
-      typeof (source as ExternalSorterSource).indexUrl === "string" &&
-      ((source as ExternalSorterSource).catalogUrl === undefined || typeof (source as ExternalSorterSource).catalogUrl === "string")
-    );
-  });
+  return value
+    .filter((source): source is ExternalSorterSource => {
+      return (
+        typeof source === "object" &&
+        source !== null &&
+        typeof (source as ExternalSorterSource).title === "string" &&
+        typeof (source as ExternalSorterSource).indexUrl === "string" &&
+        ((source as ExternalSorterSource).catalogUrl === undefined || typeof (source as ExternalSorterSource).catalogUrl === "string")
+      );
+    })
+    .map((source) => {
+      const excluded = (source as ExternalSorterSource).excludedSorterSlugs;
+      return {
+        ...source,
+        excludedSorterSlugs: Array.isArray(excluded) ? excluded.filter((slug): slug is string => typeof slug === "string") : undefined,
+      };
+    });
 }
 
 function externalizeEntry(entry: SorterIndexEntry, indexUrl: URL, sourceTitle: string): SorterIndexEntry {
