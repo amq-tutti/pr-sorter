@@ -10,6 +10,7 @@ import {
     type ResolvedSongEntry,
     type SongEntry,
 } from '../songs';
+import { ConfirmModal } from './components/ConfirmModal';
 import { Controls } from './components/Controls';
 import { Duel } from './components/Duel';
 import { HistoryModal } from './components/HistoryModal';
@@ -62,6 +63,7 @@ export function App({config, songs}: AppProps) {
     const [isHistoryOpen, setHistoryOpen] = useState(false);
     const [isSongListOpen, setSongListOpen] = useState(false);
     const [isSettingsOpen, setSettingsOpen] = useState(false);
+    const [isStartConfirmOpen, setStartConfirmOpen] = useState(false);
     const [isWritingSheet, setWritingSheet] = useState(false);
     const [isWritingSheetScores, setWritingSheetScores] = useState(false);
     const [isConnectingGoogleSheet, setConnectingGoogleSheet] = useState(false);
@@ -163,10 +165,16 @@ export function App({config, songs}: AppProps) {
         }
 
         const savedSort = storage.loadSort();
-        if (savedSort && hasSavedSortProgress(savedSort) && !window.confirm('Starting a new sort deletes all saved picks for this sorter. Scores are kept. Continue?')) {
+        if (savedSort && hasSavedSortProgress(savedSort)) {
+            setStartConfirmOpen(true);
             return;
         }
 
+        confirmStart();
+    }
+
+    function confirmStart(): void {
+        setStartConfirmOpen(false);
         const nextSort = createSort(resolvedSongs.length);
         setSort(nextSort);
         setScreen(screenFor(nextSort));
@@ -279,6 +287,13 @@ export function App({config, songs}: AppProps) {
     }
 
     function autoNextPlaylistSong(): void {
+        if (scoreEnabled && settings.playlistAutoAdvance === 'only-if-scored') {
+            const currentIndex = playlistOrder[playlistPosition] ?? null;
+            const currentSong = currentIndex !== null ? (resolvedSongs[currentIndex] ?? null) : null;
+            if (currentSong !== null && !hasMemoryScore(songEntryId(currentSong), scoresBySongId)) {
+                return; // song ended without a score — stay on the current song
+            }
+        }
         flushPendingScoreWriteback({allowAuthPrompt: false});
         movePlaylistSong(1);
     }
@@ -568,6 +583,27 @@ export function App({config, songs}: AppProps) {
             });
     }
 
+    function copyScores(): void {
+        if (!scoreEnabled) {
+            return;
+        }
+
+        const lines = resolvedSongs.map((song) => {
+            const id = songEntryId(song);
+            return scoresBySongId[id] ?? '';
+        });
+
+        void navigator.clipboard
+            .writeText(lines.join('\n'))
+            .then(() => {
+                alert('Copied scores to clipboard!');
+            })
+            .catch((error: unknown) => {
+                console.error('Error copying scores:', error);
+                alert('Could not copy scores to clipboard.');
+            });
+    }
+
     function writeRanksToSheet(): void {
         if (!rankSupported || screen !== 'complete' || !sort) {
             return;
@@ -851,6 +887,14 @@ export function App({config, songs}: AppProps) {
 
     return (
         <>
+            <ConfirmModal
+                open={isStartConfirmOpen}
+                title="Start new sort"
+                message="Starting a new sort deletes all saved picks for this sorter. Scores are kept."
+                confirmLabel="Start"
+                onConfirm={confirmStart}
+                onCancel={() => setStartConfirmOpen(false)}
+            />
             <SettingsModal
                 open={isSettingsOpen}
                 settings={settings}
@@ -916,8 +960,10 @@ export function App({config, songs}: AppProps) {
                     onLoad={loadSort}
                     onUndo={undoPick}
                     onCopyRanks={copyRanks}
+                    onCopyScores={copyScores}
                     onWriteRanksToSheet={writeRanksToSheet}
                     onSetupGoogleSheet={chooseSheet}
+                    scoreEnabled={scoreEnabled}
                 />
 
                 {screen === 'playlist' ? (

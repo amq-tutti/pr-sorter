@@ -18,8 +18,10 @@ type ControlsProps = {
     onLoad(): void;
     onUndo(): void;
     onCopyRanks(): void;
+    onCopyScores(): void;
     onWriteRanksToSheet(): void;
     onSetupGoogleSheet(): void;
+    scoreEnabled: boolean;
 };
 
 export function Controls({
@@ -40,8 +42,10 @@ export function Controls({
     onLoad,
     onUndo,
     onCopyRanks,
+    onCopyScores,
     onWriteRanksToSheet,
     onSetupGoogleSheet,
+    scoreEnabled,
 }: ControlsProps) {
     const rankControls = rankSupported ? (
         <>
@@ -63,6 +67,11 @@ export function Controls({
             {screen === 'complete' ? (
                 <button className="copy-button" type="button" onClick={onCopyRanks}>
                     Copy ranks to clipboard
+                </button>
+            ) : null}
+            {screen === 'complete' && scoreEnabled ? (
+                <button className="copy-button" type="button" onClick={onCopyScores}>
+                    Copy scores to clipboard
                 </button>
             ) : null}
             {screen === 'complete' && googleSheetsEnabled ? (

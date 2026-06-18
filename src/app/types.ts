@@ -33,11 +33,14 @@ export type MediaFormat = 'video' | 'audio' | 'full';
 
 export type SorterAutoPlayMode = 'off' | 'left' | 'right' | 'both' | 'picked' | 'higher-score';
 
+export type PlaylistAutoAdvance = 'always' | 'only-if-scored';
+
 export type Settings = {
     mediaFormat: MediaFormat;
     region: Region;
     sorterAutoPlayMode: SorterAutoPlayMode;
     autoSkipScoreDifference: number;
+    playlistAutoAdvance: PlaylistAutoAdvance;
 };
 
 export type Screen = 'landing' | 'sorting' | 'complete' | 'playlist';

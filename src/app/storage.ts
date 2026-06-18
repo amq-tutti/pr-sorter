@@ -39,6 +39,7 @@ const settingsSchema = z.object({
     region: z.enum(['eu', 'naw', 'nae']),
     sorterAutoPlayMode: z.enum(['off', 'left', 'right', 'both', 'picked', 'higher-score']).default('off'),
     autoSkipScoreDifference: z.number().min(0).max(10).default(10),
+    playlistAutoAdvance: z.enum(['always', 'only-if-scored']).default('always'),
 });
 
 const scoresSchema = z.record(z.string(), z.string());
@@ -134,6 +135,7 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
             region: 'eu',
             sorterAutoPlayMode: 'off',
             autoSkipScoreDifference: 10,
+            playlistAutoAdvance: 'always',
         };
         const raw = localStorage.getItem(settingsKey);
         if (!raw) {

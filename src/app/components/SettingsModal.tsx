@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { LegacySorterSaveInfo } from '../legacySorterMigration';
-import type { GoogleSpreadsheetSelection, MediaFormat, Region, Settings, SorterAutoPlayMode } from '../types';
+import type { GoogleSpreadsheetSelection, MediaFormat, PlaylistAutoAdvance, Region, Settings, SorterAutoPlayMode } from '../types';
 
 type SettingsModalProps = {
     open: boolean;
@@ -30,6 +30,11 @@ const mediaFormats: { value: MediaFormat; label: string }[] = [
     {value: 'video', label: 'Video'},
     {value: 'audio', label: 'Audio'},
     {value: 'full', label: 'Full songs'},
+];
+
+const playlistAutoAdvanceModes: { value: PlaylistAutoAdvance; label: string }[] = [
+    {value: 'always', label: 'Always skip'},
+    {value: 'only-if-scored', label: 'Only if scored'},
 ];
 
 const sorterAutoPlayModes: { value: SorterAutoPlayMode; label: string }[] = [
@@ -117,6 +122,21 @@ export function SettingsModal({
                                 });
                             }}
                         />
+                    </div>
+                ) : null}
+                {scoreEnabled ? (
+                    <div className="option-group">
+                        <p>When a song ends (playlist):</p>
+                        {playlistAutoAdvanceModes.map((mode) => (
+                            <button
+                                key={mode.value}
+                                className={`option-button${settings.playlistAutoAdvance === mode.value ? ' active' : ''}`}
+                                type="button"
+                                onClick={() => onChange({...settings, playlistAutoAdvance: mode.value})}
+                            >
+                                {mode.label}
+                            </button>
+                        ))}
                     </div>
                 ) : null}
                 <div className="option-group">

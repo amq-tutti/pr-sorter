@@ -35,6 +35,7 @@ function fillAutomaticPickHistory(prefix: string, songs: SongEntry[]): Migration
         region: 'eu',
         sorterAutoPlayMode: 'off',
         autoSkipScoreDifference: 10,
+        playlistAutoAdvance: 'always',
     };
     const sort = readJson<SortState>(sortKey);
 
