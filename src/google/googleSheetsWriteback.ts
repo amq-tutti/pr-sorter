@@ -27,6 +27,7 @@ type StoredAccessToken = {
 let sessionToken: StoredAccessToken | null = null;
 let tokenClient: TokenClient | null = null;
 let pendingTokenReject: ((error: GoogleWritebackError) => void) | null = null;
+let tokenChain: Promise<unknown> = Promise.resolve();
 
 window.addEventListener('pagehide', clearGoogleSessionToken);
 
@@ -36,6 +37,17 @@ export function clearGoogleSessionToken(): void {
 
 function clearStoredToken(config: GoogleSheetsAccessConfig): void {
     clearGoogleSessionToken();
+
+    const rawToken = localStorage.getItem(config.tokenStorageKey);
+    const parsedToken = rawToken ? parseStoredAccessToken(rawToken) : null;
+    if (parsedToken) {
+        // Keep the prior grant as a force-expired marker so the next getToken() attempts a
+        // silent refresh (prompt:'') before falling back to a consent popup. A transient
+        // 401/403 (usually a simply-expired token) then renews without a relogin prompt.
+        saveStoredAccessToken(config.tokenStorageKey, {...parsedToken, expiresAt: 0});
+        return;
+    }
+
     localStorage.removeItem(config.tokenStorageKey);
 }
 
@@ -204,6 +216,23 @@ export async function writeScoresToGoogleSheet(
 }
 
 async function getToken(
+    google: GoogleIdentityServices,
+    config: GoogleSheetsAccessConfig,
+    options: { allowAuthPrompt?: boolean } = {allowAuthPrompt: true},
+): Promise<string> {
+    if (isUsableStoredAccessToken(sessionToken)) {
+        return sessionToken.accessToken;
+    }
+
+    // Serialize token acquisition so concurrent sheet operations never race on the shared
+    // tokenClient callback or open duplicate consent popups. Once one caller acquires a
+    // usable token, queued callers reuse it via the in-memory re-check in acquireToken().
+    const run = tokenChain.then(() => acquireToken(google, config, options));
+    tokenChain = run.catch(() => undefined);
+    return run;
+}
+
+async function acquireToken(
     google: GoogleIdentityServices,
     config: GoogleSheetsAccessConfig,
     options: { allowAuthPrompt?: boolean } = {allowAuthPrompt: true},
