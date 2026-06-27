@@ -28,6 +28,15 @@
       "deadline": "2026-06-19T22:00:00.000Z"
     },
     {
+      "slug": "code-geass-op-ed",
+      "title": "Code Geass OP/ED",
+      "description": "Party rank sorter for Code Geass openings and endings.",
+      "tags": [
+        "Franchise"
+      ],
+      "deadline": "2026-07-05T04:00:00.000Z"
+    },
+    {
       "slug": "crystal-kay",
       "title": "Crystal Kay",
       "description": "Party rank sorter for Crystal Kay anime song",
