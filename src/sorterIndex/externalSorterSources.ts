@@ -4,6 +4,6 @@ export const externalSorterSources = [
     {
         title: 'Minigamer42',
         indexUrl: 'https://minigamer42.github.io/pr-sorter/',
-        excludedSorterSlugs: ['yorushika', 'princession'],
+        excludedSorterSlugs: ['yorushika', 'princession', 'suara'],
     },
 ] satisfies ExternalSorterSource[];
