@@ -92,12 +92,12 @@
     },
     {
       "slug": "suara",
-      "title": "Test Sorter",
-      "description": "Party rank sorter for your custom list of songs.",
+      "title": "Suara",
+      "description": "Party rank sorter for Suara anime songs",
       "tags": [
-        "Example"
+        "Artist"
       ],
-      "deadline": "2026-06-05T21:59:00.000Z"
+      "deadline": "2026-07-08T04:00:00.000Z"
     },
     {
       "slug": "uru",
