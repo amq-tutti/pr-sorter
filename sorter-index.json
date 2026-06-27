@@ -91,6 +91,15 @@
       "deadline": "2026-05-18T22:00:00.000Z"
     },
     {
+      "slug": "suara",
+      "title": "Test Sorter",
+      "description": "Party rank sorter for your custom list of songs.",
+      "tags": [
+        "Example"
+      ],
+      "deadline": "2026-06-05T21:59:00.000Z"
+    },
+    {
       "slug": "uru",
       "title": "Uru",
       "description": "Party rank sorter for Uru anime songs",
