@@ -20,6 +20,25 @@ export class GoogleWritebackError extends Error {
     }
 }
 
+export const UNSUPPORTED_SPREADSHEET_MESSAGE =
+    'This file is a Microsoft Excel (.xlsx) file, not a Google Sheet, so scores and ranks can’t be synced. Open it in Google Sheets → File → Save as Google Sheets, then pick the converted sheet.';
+
+/** Short form of {@link UNSUPPORTED_SPREADSHEET_MESSAGE} for compact button labels/tooltips. */
+export const UNSUPPORTED_SPREADSHEET_SHORT = 'Excel file — convert to a Google Sheet to sync.';
+
+/**
+ * Thrown when the selected Drive file is an Office file (e.g. an uploaded .xlsx) rather than a
+ * native Google Sheet. The Google Sheets API refuses such files for both reads and writes with
+ * `FAILED_PRECONDITION: ... The document must not be an Office file.`, so the sheet can never be a
+ * working sync target and the app disables Google read/write operations on it.
+ */
+export class UnsupportedSpreadsheetError extends GoogleWritebackError {
+    constructor(message: string = UNSUPPORTED_SPREADSHEET_MESSAGE) {
+        super(message);
+        this.name = 'UnsupportedSpreadsheetError';
+    }
+}
+
 export class GooglePickerCanceledError extends Error {
     constructor() {
         super('User canceled Picker.');

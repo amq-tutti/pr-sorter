@@ -1,5 +1,5 @@
 import { loadGoogleApis, loadGoogleIdentityServices } from './googleApiLoader';
-import { readScoresFromFirstSheet, writePartialRanksToFirstSheet, writeRanksToFirstSheet, writeScoresToFirstSheet } from './sheetsClient';
+import { assertSpreadsheetSupported, readScoresFromFirstSheet, writePartialRanksToFirstSheet, writeRanksToFirstSheet, writeScoresToFirstSheet } from './sheetsClient';
 import {
     GoogleAuthenticationRequiredError,
     type GoogleIdentityServices,
@@ -176,6 +176,32 @@ export async function loadScoresFromGoogleSheet(
             idColumnHeader: config.idColumnHeader,
             scoreColumnHeader: config.scoreColumnHeader,
         });
+    } catch (error) {
+        if (isAuthError(error)) {
+            clearStoredToken(config);
+        }
+
+        throw error;
+    }
+}
+
+/**
+ * Verifies the picked spreadsheet is a native Google Sheet the Sheets API can read/write.
+ * Throws {@link import('./types').UnsupportedSpreadsheetError} for Office files (uploaded .xlsx).
+ */
+export async function validateSpreadsheetSupported(
+    config: GoogleSheetsWritebackConfig,
+    spreadsheet: PickedSpreadsheet,
+): Promise<void> {
+    if (!config.clientId || !config.appId || !config.apiKey) {
+        throw new GoogleWritebackError('Google integration is not configured.');
+    }
+
+    try {
+        const {google} = await loadGoogleApis();
+        const token = await getToken(google, config);
+
+        await assertSpreadsheetSupported(spreadsheet.id, token);
     } catch (error) {
         if (isAuthError(error)) {
             clearStoredToken(config);

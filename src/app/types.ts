@@ -25,6 +25,9 @@ export type GoogleSheetsConfig = {
 export type GoogleSpreadsheetSelection = {
     id: string;
     name: string;
+    // Absent/true = a native Google Sheet the Sheets API can sync. False = an Office file
+    // (uploaded .xlsx) that can't be read/written, so Google sync is disabled for it.
+    writebackSupported?: boolean;
 };
 
 export type Region = 'eu' | 'naw' | 'nae';

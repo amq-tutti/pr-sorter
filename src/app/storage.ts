@@ -47,6 +47,7 @@ const scoresSchema = z.record(z.string(), z.string());
 const googleSpreadsheetSelectionSchema = z.object({
     id: z.string().min(1),
     name: z.string().min(1),
+    writebackSupported: z.boolean().optional(),
 });
 
 export function createStorage(config: AppConfig, songIds: number[]): StorageFacade {

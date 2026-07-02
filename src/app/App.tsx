@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { canUndo, choose, chooseAutomatic, createSort, currentBattle, isComplete, pickHistory, progressPercentage, ranksBySongId, type SortChoice, type SortState, undo } from '../sorter';
-import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError } from '../google/types';
-import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, writePartialRanksToGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from '../google/googleSheetsWriteback';
+import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError, UNSUPPORTED_SPREADSHEET_MESSAGE, UNSUPPORTED_SPREADSHEET_SHORT, UnsupportedSpreadsheetError } from '../google/types';
+import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, validateSpreadsheetSupported, writePartialRanksToGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from '../google/googleSheetsWriteback';
 import {
     resolveSongEntry,
     songEntryAnime,
@@ -109,6 +109,12 @@ export function App({config, songs}: AppProps) {
         if (!writebackConfig?.scoreColumnHeader || !googleSpreadsheetSelection) {
             setSheetScoresBySongId({});
             setSheetScoreStatus({state: 'unavailable', message: 'Choose a Google Sheet in Settings to show live sheet scores.'});
+            return;
+        }
+
+        if (googleSpreadsheetSelection.writebackSupported === false) {
+            setSheetScoresBySongId({});
+            setSheetScoreStatus({state: 'error', message: UNSUPPORTED_SPREADSHEET_MESSAGE});
             return;
         }
 
@@ -398,7 +404,7 @@ export function App({config, songs}: AppProps) {
         }
 
         const writebackConfig = googleWritebackConfig();
-        if (!writebackConfig?.scoreColumnHeader || !googleSpreadsheetSelection) {
+        if (!writebackConfig?.scoreColumnHeader || !googleSpreadsheetSelection || googleSpreadsheetSelection.writebackSupported === false) {
             return;
         }
 
@@ -433,7 +439,7 @@ export function App({config, songs}: AppProps) {
         options: { allowAuthPrompt?: boolean; reportErrors?: boolean } = {},
     ): Promise<number> {
         const writebackConfig = googleWritebackConfig();
-        if (!currentSort || !writebackConfig || !googleSpreadsheetSelection) {
+        if (!currentSort || !writebackConfig || !googleSpreadsheetSelection || googleSpreadsheetSelection.writebackSupported === false) {
             return Promise.resolve(0);
         }
 
@@ -620,6 +626,11 @@ export function App({config, songs}: AppProps) {
             return;
         }
 
+        if (googleSpreadsheetSelection.writebackSupported === false) {
+            alert(UNSUPPORTED_SPREADSHEET_MESSAGE);
+            return;
+        }
+
         let normalizedScoresBySongId: Map<number, number> | undefined;
         try {
             normalizedScoresBySongId = scoreEnabled ? normalizedScoresForWriteback(scoresBySongId) : undefined;
@@ -655,6 +666,11 @@ export function App({config, songs}: AppProps) {
 
         if (!googleSpreadsheetSelection) {
             alert('Choose a Google Sheet in Settings before writing to the spreadsheet.');
+            return;
+        }
+
+        if (googleSpreadsheetSelection.writebackSupported === false) {
+            alert(UNSUPPORTED_SPREADSHEET_MESSAGE);
             return;
         }
 
@@ -724,12 +740,22 @@ export function App({config, songs}: AppProps) {
         setConnectingGoogleSheet(true);
         void chooseGoogleSpreadsheet(writebackConfig)
             .then(async (spreadsheet) => {
-                setGoogleSpreadsheetSelection(spreadsheet);
-                storage.saveGoogleSpreadsheetSelection(spreadsheet);
+                const markUnsupported = (message: string): void => {
+                    const unsupported: GoogleSpreadsheetSelection = {id: spreadsheet.id, name: spreadsheet.name, writebackSupported: false};
+                    setGoogleSpreadsheetSelection(unsupported);
+                    storage.saveGoogleSpreadsheetSelection(unsupported);
+                    setSheetScoresBySongId({});
+                    setSheetScoreStatus({state: 'error', message});
+                    alert(`Selected ${spreadsheet.name}, but it can’t be synced. ${message}`);
+                };
+
+                const selection: GoogleSpreadsheetSelection = {id: spreadsheet.id, name: spreadsheet.name, writebackSupported: true};
+                setGoogleSpreadsheetSelection(selection);
+                storage.saveGoogleSpreadsheetSelection(selection);
 
                 if (scoreEnabled) {
                     try {
-                        const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, spreadsheet, songIds);
+                        const sheetScores = await loadScoresFromGoogleSheet(writebackConfig, selection, songIds);
                         const loadedScores = scoresRecordFromSheet(sheetScores);
                         setScoresBySongId((currentScores) => {
                             const nextScores = mergeLoadedScores(currentScores, loadedScores);
@@ -737,8 +763,26 @@ export function App({config, songs}: AppProps) {
                             return nextScores;
                         });
                     } catch (error) {
+                        if (error instanceof UnsupportedSpreadsheetError) {
+                            markUnsupported(error.message);
+                            return;
+                        }
+
                         console.error('Error loading scores from Google Sheet:', error);
                         alert(`Selected ${spreadsheet.name}, but could not load scores. ${messageFromError(error)}`);
+                    }
+                } else {
+                    try {
+                        await validateSpreadsheetSupported(writebackConfig, selection);
+                    } catch (error) {
+                        if (error instanceof UnsupportedSpreadsheetError) {
+                            markUnsupported(error.message);
+                            return;
+                        }
+
+                        // Auth/network problems aren't fatal to selection here; keep the sheet
+                        // selected and let a later write surface any real error.
+                        console.error('Error validating Google Sheet:', error);
                     }
                 }
             })
@@ -865,6 +909,11 @@ export function App({config, songs}: AppProps) {
     const googleSheetsDisabledReason = config.googleSheets && !import.meta.env.VITE_GOOGLE_API_KEY
         ? 'Google API key is not configured.'
         : null;
+    // Disables the Google read/write actions (but not the picker) when the selected file is an
+    // Office file (.xlsx) the Sheets API can't sync. Reuses the existing "disabled reason" pattern.
+    const sheetWritebackDisabledReason =
+        googleSheetsDisabledReason ??
+        (googleSpreadsheetSelection?.writebackSupported === false ? UNSUPPORTED_SPREADSHEET_SHORT : null);
     const writeSheetSetupReason = config.googleSheets && !googleSpreadsheetSelection ? 'Choose a Google Sheet in Settings.' : null;
     const legacySorterSaveInfo = isSettingsOpen && rankSupported ? storage.findLegacySorterSave() : null;
 
@@ -929,7 +978,7 @@ export function App({config, songs}: AppProps) {
                 sheetScoresBySongId={sheetScoresBySongId}
                 sheetScoreStatus={sheetScoreStatus}
                 googleSpreadsheetSelection={googleSpreadsheetSelection}
-                canWriteSheetScores={Boolean(googleWritebackConfig() && googleSpreadsheetSelection)}
+                canWriteSheetScores={Boolean(googleWritebackConfig() && googleSpreadsheetSelection && googleSpreadsheetSelection.writebackSupported !== false)}
                 isWritingSheetScores={isWritingSheetScores}
                 onScoreChange={updateScore}
                 onWriteSheetScores={writeSongListScoresToSheet}
@@ -947,7 +996,7 @@ export function App({config, songs}: AppProps) {
                     savedKind={savedKind}
                     rankSupported={rankSupported}
                     googleSheetsEnabled={Boolean(config.googleSheets)}
-                    googleSheetsDisabledReason={googleSheetsDisabledReason}
+                    googleSheetsDisabledReason={sheetWritebackDisabledReason}
                     googleSheetsSetupReason={writeSheetSetupReason}
                     isWritingSheet={isWritingSheet}
                     canUndo={sort ? canUndo(sort) : false}
@@ -980,7 +1029,7 @@ export function App({config, songs}: AppProps) {
                         settings={settings}
                         scoreEnabled={scoreEnabled}
                         scoresBySongId={scoresBySongId}
-                        canWriteSheetScores={Boolean(googleWritebackConfig() && googleSpreadsheetSelection)}
+                        canWriteSheetScores={Boolean(googleWritebackConfig() && googleSpreadsheetSelection && googleSpreadsheetSelection.writebackSupported !== false)}
                         sheetScoresSetupReason={writeSheetSetupReason}
                         isWritingSheetScores={isWritingSheetScores}
                         onModeChange={changePlaylistMode}

@@ -1,4 +1,4 @@
-import { GoogleWritebackError } from './types';
+import { GoogleWritebackError, UnsupportedSpreadsheetError } from './types';
 
 type SheetProperties = {
     title: string;
@@ -140,6 +140,14 @@ export async function writePartialRanksToFirstSheet({
 
     await postSheetValueUpdates(spreadsheetId, token, updates);
     return updates.length;
+}
+
+/**
+ * Cheap metadata probe used to detect Office files (uploaded .xlsx) at selection time. Throws
+ * {@link UnsupportedSpreadsheetError} for Office files; resolves for native Google Sheets.
+ */
+export async function assertSpreadsheetSupported(spreadsheetId: string, token: string): Promise<void> {
+    await fetchFirstUsableSheet(spreadsheetId, token);
 }
 
 export async function readScoresFromFirstSheet({
@@ -566,10 +574,19 @@ async function fetchJson<T>(url: string, token: string, failureMessage: string):
     }
 
     if (!response.ok) {
-        throw new GoogleWritebackError(await formatFetchFailure(response, failureMessage));
+        const message = await formatFetchFailure(response, failureMessage);
+        if (isOfficeFileErrorMessage(message)) {
+            throw new UnsupportedSpreadsheetError();
+        }
+
+        throw new GoogleWritebackError(message);
     }
 
     return (await response.json()) as T;
+}
+
+function isOfficeFileErrorMessage(message: string): boolean {
+    return /must not be an Office file/i.test(message);
 }
 
 async function formatFetchFailure(response: Response, failureMessage: string): Promise<string> {
@@ -595,7 +612,7 @@ async function googleApiErrorDetail(response: Response): Promise<string | null> 
 }
 
 function isRetryableSheetsReadError(error: unknown): boolean {
-    if (!(error instanceof GoogleWritebackError)) {
+    if (!(error instanceof GoogleWritebackError) || error instanceof UnsupportedSpreadsheetError) {
         return false;
     }
 

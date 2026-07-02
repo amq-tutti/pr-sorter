@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { UNSUPPORTED_SPREADSHEET_MESSAGE } from '../../google/types';
 import type { LegacySorterSaveInfo } from '../legacySorterMigration';
 import type { GoogleSpreadsheetSelection, MediaFormat, PlaylistAutoAdvance, Region, Settings, SorterAutoPlayMode } from '../types';
 
@@ -173,6 +174,9 @@ export function SettingsModal({
                                 </a>
                             ) : 'No spreadsheet selected'}
                         </div>
+                        {googleSpreadsheetSelection?.writebackSupported === false ? (
+                            <div className="setting-value setting-warning">{UNSUPPORTED_SPREADSHEET_MESSAGE}</div>
+                        ) : null}
                         <button
                             className="option-button"
                             type="button"
