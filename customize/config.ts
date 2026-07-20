@@ -3,7 +3,7 @@ import type { AppConfig } from "../src/app/types";
 export const config = {
   localStoragePrefix: "c-anisongs",
   title: '"C" Anisongs',
-  description: "Party rank sorter for anisongs starting with the letter C.",
+  description: "Party rank sorter for nominated anisongs starting with the letter C",
   // Tags group this sorter under one or more headers on the collection homepage.
   tags: ["Nominations"],
   // Optional voting deadline (ISO 8601). Written into the generated sorter-index.json.
