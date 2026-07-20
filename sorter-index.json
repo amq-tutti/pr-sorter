@@ -1,6 +1,15 @@
 {
   "sorters": [
     {
+      "slug": "c-anisongs",
+      "title": "\"C\" Anisongs",
+      "description": "Party rank sorter for anisongs starting with the letter C.",
+      "tags": [
+        "Nominations"
+      ],
+      "deadline": "2026-08-10T03:59:00.000Z"
+    },
+    {
       "slug": "2015",
       "title": "2015 Nominations",
       "description": "Party rank sorter for nominated anime songs from 2015",
