@@ -134,6 +134,15 @@
         "Artist"
       ],
       "deadline": "2026-06-09T20:00:00.000Z"
+    },
+    {
+      "slug": "yuuko-natsuyoshi",
+      "title": "Yuuko Natsuyoshi",
+      "description": "Party rank sorter for Yuuko Natsuyoshi anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-08-17T21:59:00.000Z"
     }
   ],
   "externalSources": [
