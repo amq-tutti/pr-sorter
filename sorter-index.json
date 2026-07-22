@@ -55,6 +55,15 @@
       "deadline": "2026-06-09T20:00:00.000Z"
     },
     {
+      "slug": "ghost-concert",
+      "title": "Ghost Concert: Missing Songs",
+      "description": "Party rank sorter \"Ghost Concert: Missing Songs\" anime songs",
+      "tags": [
+        "Franchise"
+      ],
+      "deadline": "2026-08-17T21:59:00.000Z"
+    },
+    {
       "slug": "lozareena",
       "title": "Lozareena",
       "description": "Party rank sorter for Lozareena anime songs",
