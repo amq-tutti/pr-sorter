@@ -127,6 +127,15 @@
       "deadline": "2026-07-08T04:00:00.000Z"
     },
     {
+      "slug": "takagi-san-original-songs",
+      "title": "Takagi-san Original Songs",
+      "description": "Party rank sorter for original versions of covers from Takagi-san anime",
+      "tags": [
+        "Franchise"
+      ],
+      "deadline": "2026-08-13T04:00:00.000Z"
+    },
+    {
       "slug": "uru",
       "title": "Uru",
       "description": "Party rank sorter for Uru anime songs",
