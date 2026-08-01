@@ -15,7 +15,7 @@ export const songList = [
         "id": 2,
         "anime": "ANONYMOUS;CODE - ED2",
         "name": "\"Mob's God's\" by Asaka",
-        "video": "https://youtu.be/0W1UJEy-ZyU?si=6fi4PFAmi8WC0y8t&t=100",
+        "video": "https://files.catbox.moe/iy0wrm.webm",
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=C2egw9XGx6c"
     },
@@ -63,7 +63,7 @@ export const songList = [
         "id": 8,
         "anime": "Collar×Malice -Unlimited- - ED1",
         "name": "\"CITYSCAPE\" by Asaka",
-        "video": "https://youtu.be/s44GTEWDXHc?si=UFBmhenmOXoFnHaH&t=544",
+        "video": "https://files.catbox.moe/tr9oph.webm",
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=PSxhfxp2FlY"
     },
@@ -127,7 +127,7 @@ export const songList = [
         "id": 16,
         "anime": "Hyperdimension Neptunia GameMaker R:Evolution - ED",
         "name": "\"Trust My Heart\" by Asaka",
-        "video": "https://youtu.be/i8CvPBtmEks?si=DLTtVC7cZadXiJmB&t=1453",
+        "video": "https://files.catbox.moe/ium3up.webm",
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=W8_X2Tc9GWI"
     },
@@ -183,7 +183,7 @@ export const songList = [
         "id": 23,
         "anime": "Megadimension Neptunia VIIR - ED",
         "name": "\"Kimi to Hajimaru Monogatari\" by Asaka",
-        "video": "https://youtu.be/IeQTMAdY50o?si=AgsOppp2ema8G4S9&t=623",
+        "video": "https://files.catbox.moe/3jr6ht.webm",
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=vxBz5mYQ5dk"
     },
