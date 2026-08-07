@@ -207,7 +207,7 @@ export const songList = [
         "id": 26,
         "anime": "Mystonia no Kibou -The Lost Delight- - ED2",
         "name": "\"I Don't Even Know...\" by Asaka",
-        "video": "https://www.youtube.com/watch?v=Un8tuG9RNDI",
+        "video": "https://www.youtube.com/watch?v=p-ephd3y32A",
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=p-ephd3y32A"
     },
