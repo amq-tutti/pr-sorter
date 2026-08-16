@@ -339,4 +339,20 @@ export const songList = [
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=vYuvUKc1XPM"
     },
+    {
+        "id": 43,
+        "anime": "Sullyland Nursery Rhyme - OP",
+        "name": "\"LUNATIC MEMORIES\" by Asaka",
+        "video": "https://www.youtube.com/watch?v=VT6W-jlisOI",
+        "mp3": null,
+        "full": "https://www.youtube.com/watch?v=VT6W-jlisOI"
+    },
+    {
+        "id": 44,
+        "anime": "Momento Mori - IN",
+        "name": "\"Awa no Oto\" by Asaka",
+        "video": "https://www.youtube.com/watch?v=BSJKDVhjgs4",
+        "mp3": null,
+        "full": "https://www.youtube.com/watch?v=Rgsum_w9Ug0"
+    },
 ] satisfies Song[];
