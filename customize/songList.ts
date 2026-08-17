@@ -69,7 +69,7 @@ export const songList = [
     {
         "id": 10,
         "anime": "Ghost Concert: Missing Songs - Insert",
-        "name": "\"Again\" by Minori Fujidera & Rina Satoh",
+        "name": "\"Again\" by Minori Fujidera & Rina Satou",
         "video": "https://naedist.animemusicquiz.com/saqo343t3jb27g4x.webm",
         "mp3": null
     },
