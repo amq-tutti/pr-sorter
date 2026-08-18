@@ -207,7 +207,7 @@ function ColumnMappingForm({
         <div className="import-mapping">
             <h2>Map Sheet Columns</h2>
             <p>
-                Review the detected columns before previewing the import. Leave Anime blank to use <strong>{fallbackAnimeName}</strong>. Leave Rank blank to disable rank writeback. Leave Score blank to disable score support. At least one media column is required, and at least one of Rank or Score is required.
+                Review the detected columns before previewing the import. Leave Anime blank to use <strong>{fallbackAnimeName}</strong>. If Song type is set, the Anime field becomes "Anime – Song type". Leave Rank blank to disable rank writeback. Leave Score blank to disable score support. At least one media column is required, and at least one of Rank or Score is required.
             </p>
             <div className="import-mapping__grid">
                 <ColumnSelect label="ID" value={mapping.id ?? ''} headers={headers} required onChange={(value) => onChange('id', value)}/>
@@ -217,6 +217,7 @@ function ColumnMappingForm({
                 <ColumnSelect label="Full link" value={mapping.full ?? ''} headers={headers} onChange={(value) => onChange('full', value)}/>
                 <ColumnSelect label="Rank" value={mapping.rank ?? ''} headers={headers} onChange={(value) => onChange('rank', value)}/>
                 <ColumnSelect label="Anime" value={mapping.anime ?? ''} headers={headers} onChange={(value) => onChange('anime', value)}/>
+                <ColumnSelect label="Song type" value={mapping.songType ?? ''} headers={headers} onChange={(value) => onChange('songType', value)}/>
                 <ColumnSelect label="Score" value={mapping.score ?? ''} headers={headers} onChange={(value) => onChange('score', value)}/>
             </div>
             {missingRequired.length > 0 ? <Status message={`Required columns still missing: ${missingRequired.join(', ')}.`} tone="error"/> : null}

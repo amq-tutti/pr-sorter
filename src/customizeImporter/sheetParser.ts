@@ -9,7 +9,7 @@ export type ParsedSheetCustomize = {
     scoreColumnHeader?: string;
 };
 
-export type SheetColumnKey = 'id' | 'anime' | 'song' | 'video' | 'mp3' | 'full' | 'rank' | 'score';
+export type SheetColumnKey = 'id' | 'anime' | 'songType' | 'song' | 'video' | 'mp3' | 'full' | 'rank' | 'score';
 
 export type SheetColumnMapping = Partial<Record<SheetColumnKey, string>>;
 
@@ -22,6 +22,7 @@ export type SheetHeaders = {
 const HEADER_ALIASES: Record<SheetColumnKey, readonly string[]> = {
     id: ['ID', 'Song ID', '#'],
     anime: ['Anime Name', 'Anime', 'Series', 'Show'],
+    songType: ['Song Type', 'Type', 'OP/ED', 'Segment'],
     song: ['Song', 'Song Name', 'Title', 'Song Info', 'Name'],
     video: ['Video', 'Video Link', 'Video Link (if exists)', 'Link'],
     mp3: ['MP3', 'MP3 Link', 'mp3 Links', 'Audio', 'Audio Link', 'Song Link'],
@@ -58,6 +59,7 @@ export function inspectSheetHeaders(rows: SheetGridCell[][]): SheetHeaders {
         detected: {
             id: findHeaderName(headers, HEADER_ALIASES.id) ?? undefined,
             anime: findHeaderName(headers, HEADER_ALIASES.anime) ?? undefined,
+            songType: findHeaderName(headers, HEADER_ALIASES.songType) ?? undefined,
             song: findHeaderName(headers, HEADER_ALIASES.song) ?? undefined,
             video: findHeaderName(headers, HEADER_ALIASES.video) ?? undefined,
             mp3: findHeaderName(headers, HEADER_ALIASES.mp3) ?? undefined,
@@ -80,6 +82,7 @@ export function parseSheetGrid(
     const columns = {
         id: requireColumn(headers.headers, mapping.id, 'ID'),
         anime: optionalColumn(headers.headers, mapping.anime),
+        songType: optionalColumn(headers.headers, mapping.songType),
         song: requireColumn(headers.headers, mapping.song, 'Song'),
         video: optionalColumn(headers.headers, mapping.video),
         mp3: optionalColumn(headers.headers, mapping.mp3),
@@ -112,7 +115,9 @@ export function parseSheetGrid(
         }
 
         const songCell = row[columns.song];
-        const anime = columns.anime === null ? null : getCell(row, columns.anime) || null;
+        const animeName = columns.anime === null ? null : getCell(row, columns.anime) || null;
+        const songType = columns.songType === null ? null : getCell(row, columns.songType) || null;
+        const anime = songType ? (animeName ? `${animeName} – ${songType}` : songType) : animeName;
         const videoCell = columns.video === null ? songCell : row[columns.video];
         const mp3Cell = columns.mp3 === null ? null : row[columns.mp3];
         const fullCell = columns.full === null ? null : row[columns.full];
