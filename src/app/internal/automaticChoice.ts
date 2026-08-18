@@ -1,11 +1,11 @@
 import { currentBattle, type SortChoice, type SortState } from '../../sorter';
-import { songEntryId, type ResolvedSongEntry } from '../../songs';
+import { songEntryId, type SongCatalog } from '../../songs';
 import type { Settings, SongScoresById } from '../types';
 import { normalizeScore } from './songScores';
 
 export function automaticChoiceForCurrentBattle(
     sort: SortState,
-    songs: ResolvedSongEntry[],
+    catalog: SongCatalog,
     scoresBySongId: SongScoresById,
     settings: Settings,
     scoreEnabled: boolean,
@@ -19,9 +19,9 @@ export function automaticChoiceForCurrentBattle(
         return null;
     }
 
-    const [leftIndex, rightIndex] = battle;
-    const leftSong = songs[leftIndex];
-    const rightSong = songs[rightIndex];
+    const [leftId, rightId] = battle;
+    const leftSong = catalog.byId.get(leftId);
+    const rightSong = catalog.byId.get(rightId);
     if (!leftSong || !rightSong) {
         return null;
     }

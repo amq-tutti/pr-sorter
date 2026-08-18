@@ -1,28 +1,35 @@
+import type { SongId } from '../../songs';
+
 export type SortChoice = 'left' | 'right';
 export type SortPickKind = 'manual' | 'automatic';
 
 export type SortPickEntry = {
     battleNo: number;
-    leftIndex: number;
-    rightIndex: number;
-    pickedIndex: number;
+    leftId: SongId;
+    rightId: SongId;
+    pickedId: SongId;
     choice: SortChoice;
     kind: SortPickKind;
 };
 
+// Every number below is a stable song id, never a position in the song list. Index-keyed state
+// silently reattached itself to the wrong songs whenever customize/songList.ts changed.
 export type Merge = {
-    left: number[];
-    right: number[];
-    merged: number[];
+    left: SongId[];
+    right: SongId[];
+    merged: SongId[];
     leftPos: number;
     rightPos: number;
 };
 
 export type SortState = {
-    groups: number[][];
+    groups: SongId[][];
     current: Merge | null;
     battleNo: number;
     pickedCount: number;
+    // Songs given a final position so far. Persisted rather than replayed from history, so progress
+    // survives a reconcile that clears history and stays O(1) per render.
+    placedCount: number;
     estimatedBattles: number;
     history: Snapshot[];
 };
@@ -53,6 +60,7 @@ const snapshot = (state: SortState, historyEntryKind?: SortPickKind, historyEntr
         current: cloneMerge(state.current),
         battleNo: state.battleNo,
         pickedCount: state.pickedCount,
+        placedCount: state.placedCount,
         estimatedBattles: state.estimatedBattles,
     };
 
@@ -69,18 +77,72 @@ const snapshot = (state: SortState, historyEntryKind?: SortPickKind, historyEntr
 
 export const isComplete = (sort: SortState): boolean => sort.current === null && sort.groups.length === 1;
 
-export function createSort(songCount: number): SortState {
-    return nextBattle({
-        groups: Array.from({length: songCount}, (_, index) => [index]),
+export function createSort(songIds: SongId[]): SortState {
+    return withEstimate(nextBattle({
+        groups: songIds.map((songId) => [songId]),
         current: null,
         battleNo: 1,
         pickedCount: 0,
-        estimatedBattles: Math.max(1, Math.ceil(songCount * Math.log2(Math.max(2, songCount)))),
+        placedCount: 0,
+        estimatedBattles: 1,
         history: [],
-    });
+    }));
 }
 
-function nextBattle(state: SortState): SortState {
+// Total placements a from-scratch sort of this size performs. Used to reconstruct placedCount for
+// saves written before it was persisted.
+export function totalMergePlacements(songCount: number): number {
+    const queue = Array.from({length: songCount}, () => 1);
+    let total = 0;
+
+    while (queue.length > 1) {
+        const left = queue.shift();
+        const right = queue.shift();
+        if (left === undefined || right === undefined) {
+            break;
+        }
+
+        const mergedSize = left + right;
+        total += mergedSize;
+        queue.push(mergedSize);
+    }
+
+    return Math.max(1, total);
+}
+
+// Placements still owed before the sort completes: every element of every future merge output.
+export function remainingPlacements(sort: SortState): number {
+    const queue = sort.groups.map((group) => group.length);
+    let total = 0;
+
+    if (sort.current) {
+        const activeSize = sort.current.left.length + sort.current.right.length;
+        total += activeSize - sort.current.merged.length;
+        queue.push(activeSize);
+    }
+
+    while (queue.length > 1) {
+        const left = queue.shift();
+        const right = queue.shift();
+        if (left === undefined || right === undefined) {
+            break;
+        }
+
+        const mergedSize = left + right;
+        total += mergedSize;
+        queue.push(mergedSize);
+    }
+
+    return total;
+}
+
+export function withEstimate(sort: SortState): SortState {
+    return {...sort, estimatedBattles: Math.max(1, sort.pickedCount + remainingPlacements(sort))};
+}
+
+// Exported for the reconciler, which re-pumps the queue after adding or removing songs. Internal to
+// the sorter module — not re-exported from ../index.ts.
+export function nextBattle(state: SortState): SortState {
     while (state.current === null && state.groups.length > 1) {
         const left = state.groups.shift();
         const right = state.groups.shift();
@@ -91,18 +153,14 @@ function nextBattle(state: SortState): SortState {
     return state;
 }
 
-export function currentBattle(sort: SortState): [number, number] | null {
+export function currentBattle(sort: SortState): [SongId, SongId] | null {
     const merge = sort.current;
     return merge ? [merge.left[merge.leftPos], merge.right[merge.rightPos]] : null;
 }
 
-export function currentSongSortInfo(sort: SortState, songIndex: number): CurrentSongSortInfo | null {
-    return songSortInfo(sort, songIndex);
-}
-
-export function songSortInfo(sort: SortState, songIndex: number): CurrentSongSortInfo | null {
+export function songSortInfo(sort: SortState, songId: SongId): CurrentSongSortInfo | null {
     if (isComplete(sort)) {
-        const rank = sort.groups[0].indexOf(songIndex) + 1;
+        const rank = sort.groups[0].indexOf(songId) + 1;
         return rank > 0 ? {minRank: rank, maxRank: rank, songCount: sort.groups[0].length} : null;
     }
 
@@ -110,7 +168,7 @@ export function songSortInfo(sort: SortState, songIndex: number): CurrentSongSor
     const activeMergeSize = merge ? merge.left.length + merge.right.length : 0;
 
     if (merge) {
-        const activeRange = songRangeInMerge(merge, songIndex);
+        const activeRange = songRangeInMerge(merge, songId);
         if (activeRange) {
             return wholeSetEstimateFromQueue(
                 [
@@ -122,7 +180,7 @@ export function songSortInfo(sort: SortState, songIndex: number): CurrentSongSor
     }
 
     for (const group of sort.groups) {
-        const position = group.indexOf(songIndex);
+        const position = group.indexOf(songId);
         if (position === -1) {
             continue;
         }
@@ -141,13 +199,6 @@ export function songSortInfo(sort: SortState, songIndex: number): CurrentSongSor
     }
 
     return null;
-}
-
-function wholeSetEstimate(sort: SortState, activeRange: CurrentSongSortInfo): CurrentSongSortInfo {
-    return wholeSetEstimateFromQueue([
-        ...sort.groups.map((group) => ({size: group.length, range: null})),
-        {size: activeRange.songCount, range: activeRange},
-    ]) ?? activeRange;
 }
 
 function wholeSetEstimateFromQueue(
@@ -202,8 +253,8 @@ function songRangeInActiveMerge(merge: Merge, side: SortChoice): CurrentSongSort
     };
 }
 
-function songRangeInMerge(merge: Merge, songIndex: number): CurrentSongSortInfo | null {
-    const mergedPosition = merge.merged.indexOf(songIndex);
+function songRangeInMerge(merge: Merge, songId: SongId): CurrentSongSortInfo | null {
+    const mergedPosition = merge.merged.indexOf(songId);
     if (mergedPosition !== -1) {
         return {
             minRank: mergedPosition + 1,
@@ -212,15 +263,15 @@ function songRangeInMerge(merge: Merge, songIndex: number): CurrentSongSortInfo 
         };
     }
 
-    if (merge.left[merge.leftPos] === songIndex) {
+    if (merge.left[merge.leftPos] === songId) {
         return songRangeInActiveMerge(merge, 'left');
     }
 
-    if (merge.right[merge.rightPos] === songIndex) {
+    if (merge.right[merge.rightPos] === songId) {
         return songRangeInActiveMerge(merge, 'right');
     }
 
-    const leftPosition = merge.left.indexOf(songIndex);
+    const leftPosition = merge.left.indexOf(songId);
     if (leftPosition >= merge.leftPos) {
         const minRank = merge.merged.length + (leftPosition - merge.leftPos) + 1;
         return {
@@ -230,7 +281,7 @@ function songRangeInMerge(merge: Merge, songIndex: number): CurrentSongSortInfo 
         };
     }
 
-    const rightPosition = merge.right.indexOf(songIndex);
+    const rightPosition = merge.right.indexOf(songId);
     if (rightPosition >= merge.rightPos) {
         const minRank = merge.merged.length + (rightPosition - merge.rightPos) + 1;
         return {
@@ -244,27 +295,31 @@ function songRangeInMerge(merge: Merge, songIndex: number): CurrentSongSortInfo 
 }
 
 export function choose(sort: SortState, choice: SortChoice): SortState {
-    return chooseWithHistory(sort, choice, 'manual');
+    return applyChoice(sort, choice, 'manual');
 }
 
 export function chooseAutomatic(sort: SortState, choice: SortChoice): SortState {
-    return chooseWithHistory(sort, choice, 'automatic');
+    return applyChoice(sort, choice, 'automatic');
 }
 
-function chooseWithHistory(
+/**
+ * Advances the merge by one pick. Pass `record: null` to project a hypothetical pick without
+ * recording undo history — that path runs thousands of times per render, so it must not snapshot.
+ */
+export function applyChoice(
     sort: SortState,
     choice: SortChoice,
-    kind: SortPickKind,
+    record: SortPickKind | null,
 ): SortState {
     const merge = cloneMerge(sort.current);
     if (!merge) {
-        return sort;
+        return record === null ? {...snapshot(sort), history: []} : sort;
     }
 
     const next: SortState = {
         ...snapshot(sort),
         current: merge,
-        history: [...sort.history, snapshot(sort, kind, choice)],
+        history: record === null ? [] : [...sort.history, snapshot(sort, record, choice)],
     };
     const source = choice === 'left' ? merge.left : merge.right;
     const pos = choice === 'left' ? merge.leftPos : merge.rightPos;
@@ -272,8 +327,11 @@ function chooseWithHistory(
     merge.leftPos += choice === 'left' ? 1 : 0;
     merge.rightPos += choice === 'right' ? 1 : 0;
     next.pickedCount += 1;
+    next.placedCount += 1;
 
     if (merge.leftPos === merge.left.length || merge.rightPos === merge.right.length) {
+        // The exhausted side ends the merge, so the other side's tail is placed for free.
+        next.placedCount += (merge.left.length - merge.leftPos) + (merge.right.length - merge.rightPos);
         next.groups.push([
             ...merge.merged,
             ...merge.left.slice(merge.leftPos),
@@ -286,7 +344,7 @@ function chooseWithHistory(
         next.battleNo += 1;
     }
 
-    return nextBattle(next);
+    return withEstimate(nextBattle(next));
 }
 
 export function undo(sort: SortState): SortState {
@@ -317,7 +375,7 @@ export function canUndo(sort: SortState): boolean {
     return sort.history.length > 0;
 }
 
-export const sortedSongIndexes = (sort: SortState): number[] =>
+export const sortedSongIds = (sort: SortState): SongId[] =>
     isComplete(sort) ? sort.groups[0] : [];
 
 export function pickHistory(sort: SortState): SortPickEntry[] {
@@ -333,15 +391,15 @@ export function pickHistory(sort: SortState): SortPickEntry[] {
             return [];
         }
 
-        const leftIndex = entry.current.left[entry.current.leftPos];
-        const rightIndex = entry.current.right[entry.current.rightPos];
-        const pickedIndex = choice === 'left' ? leftIndex : rightIndex;
+        const leftId = entry.current.left[entry.current.leftPos];
+        const rightId = entry.current.right[entry.current.rightPos];
+        const pickedId = choice === 'left' ? leftId : rightId;
 
         return [{
             battleNo: entry.battleNo,
-            leftIndex,
-            rightIndex,
-            pickedIndex,
+            leftId,
+            rightId,
+            pickedId,
             choice,
             kind: entry.historyEntryKind ?? 'manual',
         }];
@@ -382,31 +440,12 @@ function inferChoice(previous: Snapshot, next: Snapshot | undefined): SortChoice
     return null;
 }
 
-function includesMergeOutput(group: number[], merge: Merge): boolean {
+function includesMergeOutput(group: SongId[], merge: Merge): boolean {
     const expected = [...merge.left, ...merge.right];
     return expected.every((index) => group.includes(index));
 }
 
-function totalMergePlacements(songCount: number): number {
-    const queue = Array.from({length: songCount}, () => 1);
-    let total = 0;
-
-    while (queue.length > 1) {
-        const left = queue.shift();
-        const right = queue.shift();
-        if (left === undefined || right === undefined) {
-            break;
-        }
-
-        const mergedSize = left + right;
-        total += mergedSize;
-        queue.push(mergedSize);
-    }
-
-    return Math.max(1, total);
-}
-
-function sameArray(left: number[], right: number[]): boolean {
+function sameArray(left: SongId[], right: SongId[]): boolean {
     return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
@@ -419,28 +458,11 @@ function hasSameMergeInputs(left: Merge | null, right: Merge | null): boolean {
     );
 }
 
-function placedByTransition(previous: Snapshot, next: Snapshot): number {
-    if (previous.current === null || next.pickedCount <= previous.pickedCount) {
-        return 0;
-    }
-
-    const manualPickCount = next.pickedCount - previous.pickedCount;
-    const mergeSize = previous.current.left.length + previous.current.right.length;
-    const nextIsSameMerge = hasSameMergeInputs(previous.current, next.current);
-
-    return nextIsSameMerge ? manualPickCount : mergeSize - previous.current.merged.length;
-}
-
-export function progressPercentage(sort: SortState, songCount: number): number {
+export function progressPercentage(sort: SortState): number {
     if (isComplete(sort)) {
         return 100;
     }
 
-    const snapshots = [...sort.history, snapshot(sort)];
-    const placed = snapshots.reduce((total, current, index) => {
-        const previous = snapshots[index - 1];
-        return previous ? total + placedByTransition(previous, current) : total;
-    }, 0);
-
-    return Math.min(99, Math.floor((placed * 100) / totalMergePlacements(songCount)));
+    const total = sort.placedCount + remainingPlacements(sort);
+    return Math.min(99, Math.floor((sort.placedCount * 100) / Math.max(1, total)));
 }

@@ -1,12 +1,26 @@
-import type { SortState } from '../sorter';
+import { reconcileSort, type ReconcileReport, type SortState } from '../sorter';
 import { z } from 'zod';
 import type { AppConfig, GoogleSpreadsheetSelection, Settings, SongScoresById } from './types';
-import { isSortState } from './internal/savedSortValidation';
+import { mapLegacyIndexesToIds, readSavedSort, SORT_SAVE_VERSION, type LoadedSave } from './internal/savedSortValidation';
 import { isScoreEnabled } from './internal/songScores';
 import { findLegacySorterSave, migrateLegacySorterSave, type LegacySorterSaveInfo } from './legacySorterMigration';
 
+/**
+ * Outcome of reading `<prefix>:sort` and re-fitting it onto the current song list. Producing this is
+ * a pure read — nothing is written or deleted until the caller commits via saveSort/dropSort.
+ */
+export type SortLoadResult =
+    | { kind: 'none' }
+    | { kind: 'ready'; sort: SortState; report: ReconcileReport }
+    /** v1 save from a shorter list; mapping is a guess, so it needs the user's consent. */
+    | { kind: 'needs-consent'; sort: SortState; report: ReconcileReport; savedSongCount: number }
+    | { kind: 'unusable'; reason: string };
+
 type StorageFacade = {
-    loadSort(): SortState | null;
+    /** Pure read used during render. Must never write or delete. */
+    peekSort(): SortLoadResult;
+    loadSort(): SortLoadResult;
+    dropSort(): void;
     saveSort(sort: SortState): void;
     loadScores(): SongScoresById;
     saveScores(scores: SongScoresById): void;
@@ -23,7 +37,7 @@ type StorageFacade = {
 };
 
 export type SorterStorageSnapshot = {
-    version: 1;
+    version: 2;
     prefix: string;
     exportedAt: string;
     entries: Record<string, string>;
@@ -60,27 +74,49 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
     const currentSongIds = new Set(songIds);
     const songCount = songIds.length;
 
-    function loadSort(): SortState | null {
+    // Reading is deliberately side-effect free: this used to delete the save from inside a render,
+    // destroying progress before the user could export it.
+    function readSort(): SortLoadResult {
         const raw = localStorage.getItem(sortKey);
         if (!raw) {
-            return null;
+            return {kind: 'none'};
         }
 
+        let parsed: unknown;
         try {
-            const parsed: unknown = JSON.parse(raw);
-            if (isSortState(parsed, songCount)) {
-                return parsed;
-            }
+            parsed = JSON.parse(raw);
         } catch {
-            // Invalid progress is removed below.
+            return {kind: 'unusable', reason: 'Saved progress could not be read.'};
         }
 
-        localStorage.removeItem(sortKey);
-        return null;
+        const loaded: LoadedSave = readSavedSort(parsed, songIds);
+        if (loaded.kind === 'unusable') {
+            return loaded;
+        }
+
+        const reconciled = reconcileSort(loaded.sort, songIds);
+        if (!reconciled) {
+            return {kind: 'unusable', reason: 'Saved progress no longer matches this sorter\'s song list.'};
+        }
+
+        if (loaded.kind === 'legacy-ambiguous') {
+            return {
+                kind: 'needs-consent',
+                sort: reconciled.sort,
+                report: reconciled.report,
+                savedSongCount: loaded.savedSongCount,
+            };
+        }
+
+        return {kind: 'ready', sort: reconciled.sort, report: reconciled.report};
     }
 
     function saveSort(sort: SortState): void {
-        localStorage.setItem(sortKey, JSON.stringify(sort));
+        localStorage.setItem(sortKey, JSON.stringify({...sort, version: SORT_SAVE_VERSION}));
+    }
+
+    function dropSort(): void {
+        localStorage.removeItem(sortKey);
     }
 
     function loadScores(): SongScoresById {
@@ -203,7 +239,7 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
         }
 
         return {
-            version: 1,
+            version: 2,
             prefix: config.localStoragePrefix,
             exportedAt: new Date().toISOString(),
             entries,
@@ -244,7 +280,9 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
             return null;
         }
 
-        localStorage.setItem(sortKey, JSON.stringify(result.sort));
+        // The old sorter format stores positions; the migration is gated on a matching song count,
+        // so mapping position -> id is unambiguous.
+        saveSort(mapLegacyIndexesToIds(result.sort, songIds, songCount));
         return {
             legacyPrefix: result.legacyPrefix,
             keyCount: result.keyCount,
@@ -267,7 +305,9 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
     }
 
     return {
-        loadSort,
+        peekSort: readSort,
+        loadSort: readSort,
+        dropSort,
         saveSort,
         loadScores,
         saveScores,
@@ -289,7 +329,8 @@ export function parseSorterStorageSnapshot(snapshot: unknown): SorterStorageSnap
         throw new Error('Import file must contain a sorter storage snapshot.');
     }
 
-    if (snapshot.version !== 1) {
+    // v1 exports carry a v1 `:sort` blob, which the load path migrates on read.
+    if (snapshot.version !== 1 && snapshot.version !== 2) {
         throw new Error('Import file uses an unsupported sorter storage version.');
     }
 
@@ -315,7 +356,7 @@ export function parseSorterStorageSnapshot(snapshot: unknown): SorterStorageSnap
     }
 
     return {
-        version: 1,
+        version: 2,
         prefix: snapshot.prefix,
         exportedAt: snapshot.exportedAt,
         entries,

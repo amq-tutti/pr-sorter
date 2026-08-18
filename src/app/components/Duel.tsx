@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { currentBattle, type SortChoice, type SortState } from '../../sorter';
-import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry } from '../../songs';
+import { songEntryId, songEntrySongs, songWithTypeLabel, type ResolvedSongEntry, type SongCatalog } from '../../songs';
 import type { AppConfig, Settings, SongScoresById } from '../types';
 import { projectedSongSortInfo } from '../internal/projectedSortInfo';
 import { SongCard } from './SongCard';
 
 type DuelProps = {
     config: AppConfig;
-    songs: ResolvedSongEntry[];
+    catalog: SongCatalog;
     sort: SortState;
     settings: Settings;
     scoreEnabled: boolean;
@@ -27,7 +27,7 @@ type ActiveDuelPlayer = {
 
 export function Duel({
     config,
-    songs,
+    catalog,
     sort,
     settings,
     scoreEnabled,
@@ -50,11 +50,11 @@ export function Duel({
         return null;
     }
 
-    const [leftIndex, rightIndex] = battle;
-    const leftEntry = songs[leftIndex];
-    const rightEntry = songs[rightIndex];
+    const [leftId, rightId] = battle;
+    const leftEntry = catalog.byId.get(leftId);
+    const rightEntry = catalog.byId.get(rightId);
     if (leftEntry === undefined || rightEntry === undefined) {
-        throw new Error('Sorter state references a song index outside the configured song list.');
+        throw new Error('Sorter state references a song id outside the configured song list.');
     }
 
     function mediaStarted(side: SortChoice, index: number): void {
@@ -70,9 +70,8 @@ export function Duel({
             <DuelEntry
                 config={config}
                 entry={leftEntry}
-                entryIndex={leftIndex}
                 side="left"
-                songs={songs}
+                catalog={catalog}
                 sort={sort}
                 settings={settings}
                 scoreEnabled={scoreEnabled}
@@ -90,9 +89,8 @@ export function Duel({
             <DuelEntry
                 config={config}
                 entry={rightEntry}
-                entryIndex={rightIndex}
                 side="right"
-                songs={songs}
+                catalog={catalog}
                 sort={sort}
                 settings={settings}
                 scoreEnabled={scoreEnabled}
@@ -114,9 +112,8 @@ export function Duel({
 type DuelEntryProps = {
     config: AppConfig;
     entry: ResolvedSongEntry;
-    entryIndex: number;
     side: SortChoice;
-    songs: ResolvedSongEntry[];
+    catalog: SongCatalog;
     sort: SortState;
     settings: Settings;
     scoreEnabled: boolean;
@@ -135,9 +132,8 @@ type DuelEntryProps = {
 function DuelEntry({
     config,
     entry,
-    entryIndex,
     side,
-    songs,
+    catalog,
     sort,
     settings,
     scoreEnabled,
@@ -153,7 +149,7 @@ function DuelEntry({
     onScoreChange,
 }: DuelEntryProps) {
     const entryId = songEntryId(entry);
-    const sortInfo = projectedSongSortInfo(sort, entryIndex, {songs, scoresBySongId, settings, scoreEnabled});
+    const sortInfo = projectedSongSortInfo(sort, entryId, {catalog, scoresBySongId, settings, scoreEnabled});
     const entrySongs = songEntrySongs(entry);
     const [autoPlaySongIndex, setAutoPlaySongIndex] = useState(0);
     const [playingSongIndex, setPlayingSongIndex] = useState<number | null>(null);

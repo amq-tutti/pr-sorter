@@ -80,9 +80,11 @@ export function SongCard({
                     &#8635;
                 </button>
             </div>
-            <div className="anime">{song.anime}</div>
+            <div className="anime" title={song.anime}>
+                <span className="anime__text">{song.anime}</span>
+            </div>
             <div className="song">
-                <span className="song__name">{song.name}</span>
+                <span className="song__name" title={song.name}>{song.name}</span>
                 {sortInfo ? (
                     <span
                         className="help-icon song__sort-help"

@@ -8,6 +8,7 @@ import {
     songEntrySongs,
     type ResolvedSong,
     type ResolvedSongEntry,
+    type SongCatalog,
 } from '../../songs';
 import { projectedSongSortInfos } from '../internal/projectedSortInfo';
 import type { GoogleSpreadsheetSelection, Settings, SongScoresById } from '../types';
@@ -20,7 +21,7 @@ type SheetScoreStatus =
 
 type SongListModalProps = {
     open: boolean;
-    songs: ResolvedSongEntry[];
+    catalog: SongCatalog;
     sort: SortState | null;
     settings: Settings;
     scoreEnabled: boolean;
@@ -40,7 +41,7 @@ type SortDirection = 'asc' | 'desc';
 
 export function SongListModal({
     open,
-    songs,
+    catalog,
     sort,
     settings,
     scoreEnabled,
@@ -65,15 +66,17 @@ export function SongListModal({
     }, [open]);
 
     const projectedRanges = useMemo(
-        () => open && sort ? projectedSongSortInfos(sort, songs.length, {songs, scoresBySongId, settings, scoreEnabled}) : new Map(),
-        [open, scoreEnabled, scoresBySongId, settings, songs, sort],
+        () => open && sort
+            ? projectedSongSortInfos(sort, catalog.ids, {catalog, scoresBySongId, settings, scoreEnabled})
+            : new Map(),
+        [open, scoreEnabled, scoresBySongId, settings, catalog, sort],
     );
 
     if (!open) {
         return null;
     }
 
-    const rows = songs
+    const rows = catalog.entries
         .map((song, index) => ({song, index}))
         .sort((left, right) =>
             compareRows(left, right, sortColumn, sortDirection, scoresBySongId, sheetScoresBySongId),

@@ -1,4 +1,4 @@
-import type { SortState } from '../sorter';
+import { remainingPlacements, totalMergePlacements, type SortState } from '../sorter';
 
 export type LegacySorterSaveInfo = {
     legacyPrefix: string;
@@ -55,14 +55,19 @@ export function migrateLegacySorterSave(
     }
 
     const completedRanking = completedLegacyRanking(legacy, songCount);
-    const sort: SortState = completedRanking ? {
+    const sort: SortState | null = completedRanking ? {
         groups: [completedRanking],
         current: null,
         battleNo: legacy.battleNo,
         pickedCount: Math.max(0, legacy.sortedNo),
+        placedCount: totalMergePlacements(songCount),
         estimatedBattles: Math.max(1, legacy.totalBattles),
         history: [],
-    } : partialLegacySortState(legacy);
+    } : partialLegacySortState(legacy, songCount);
+
+    if (!sort) {
+        return null;
+    }
 
     return {
         legacyPrefix: legacy.legacyPrefix,
@@ -131,12 +136,7 @@ function legacyMigrationBlocker(legacy: LegacySorterSave, songCount: number): st
         return 'Legacy save has an invalid active comparison.';
     }
 
-    if (
-        legacy.leftInnerIndex < 0 ||
-        legacy.leftInnerIndex >= left.length ||
-        legacy.rightInnerIndex < 0 ||
-        legacy.rightInnerIndex >= right.length
-    ) {
+    if (!legacyMergeCursors(left, right, legacy)) {
         return 'Legacy save has an invalid active comparison position.';
     }
 
@@ -152,14 +152,14 @@ function completedLegacyRanking(legacy: LegacySorterSave, songCount: number): nu
     return [...root];
 }
 
-function partialLegacySortState(legacy: LegacySorterSave): SortState {
+function partialLegacySortState(legacy: LegacySorterSave, songCount: number): SortState | null {
     const left = legacy.sortedIndexList[legacy.leftIndex] ?? [];
     const right = legacy.sortedIndexList[legacy.rightIndex] ?? [];
-    const mergedLength = Math.max(0, Math.min(
-        legacy.recordDataList.length,
-        legacy.pointer > 0 ? legacy.pointer : legacy.leftInnerIndex + legacy.rightInnerIndex,
-    ));
-    const merged = legacy.recordDataList.slice(0, mergedLength);
+    const cursors = legacyMergeCursors(left, right, legacy);
+    if (!cursors) {
+        return null;
+    }
+
     const activeIndexes = new Set([legacy.leftIndex, legacy.rightIndex]);
     const groups = legacy.sortedIndexList
         .map((group, index) => ({group, index}))
@@ -167,20 +167,68 @@ function partialLegacySortState(legacy: LegacySorterSave): SortState {
         .sort((leftEntry, rightEntry) => leftEntry.index - rightEntry.index)
         .map(({group}) => [...group]);
 
-    return {
+    const state: SortState = {
         groups,
         current: {
             left: [...left],
             right: [...right],
-            merged,
-            leftPos: legacy.leftInnerIndex,
-            rightPos: legacy.rightInnerIndex,
+            merged: cursors.merged,
+            leftPos: cursors.leftPos,
+            rightPos: cursors.rightPos,
         },
         battleNo: Math.max(1, legacy.battleNo),
         pickedCount: Math.max(0, legacy.sortedNo),
+        placedCount: 0,
         estimatedBattles: Math.max(1, legacy.totalBattles),
         history: [],
     };
+
+    // Legacy saves carry no placement counter; recover it from how much work the state still owes.
+    return {...state, placedCount: Math.max(0, totalMergePlacements(songCount) - remainingPlacements(state))};
+}
+
+// A merge must satisfy merged.length === leftPos + rightPos, or flushing it emits a group of the
+// wrong length. recordDataList can be shorter than leftInnerIndex + rightInnerIndex, so derive both
+// cursors from what merged actually contains rather than trusting the two stored positions.
+function legacyMergeCursors(
+    left: number[],
+    right: number[],
+    legacy: LegacySorterSave,
+): { merged: number[]; leftPos: number; rightPos: number } | null {
+    const mergedLength = Math.max(0, Math.min(
+        legacy.recordDataList.length,
+        legacy.pointer > 0 ? legacy.pointer : legacy.leftInnerIndex + legacy.rightInnerIndex,
+    ));
+    const merged = legacy.recordDataList.slice(0, mergedLength);
+    const leftRemaining = new Set(left);
+    const rightRemaining = new Set(right);
+    let leftPos = 0;
+    let rightPos = 0;
+
+    for (const songIndex of merged) {
+        if (leftRemaining.delete(songIndex)) {
+            leftPos += 1;
+        } else if (rightRemaining.delete(songIndex)) {
+            rightPos += 1;
+        } else {
+            return null;
+        }
+    }
+
+    // A live merge always has both cursors pointing at a real contender; equality means the merge
+    // already finished, which this legacy shape cannot represent.
+    if (leftPos >= left.length || rightPos >= right.length) {
+        return null;
+    }
+
+    // merged must be exactly the two consumed prefixes, otherwise the flushed order would be wrong.
+    const consumed = [...left.slice(0, leftPos), ...right.slice(0, rightPos)].sort((a, b) => a - b);
+    const observed = [...merged].sort((a, b) => a - b);
+    if (consumed.length !== observed.length || consumed.some((value, index) => value !== observed[index])) {
+        return null;
+    }
+
+    return {merged, leftPos, rightPos};
 }
 
 function hasCompletedAncestor(index: number, legacy: LegacySorterSave): boolean {

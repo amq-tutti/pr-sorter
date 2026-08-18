@@ -917,7 +917,17 @@ body.sorter-index-body {
   height: 10%;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* Clamped on an inner span so .anime keeps centring the block within its fixed-height row. */
+.anime__text,
+.song__name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .music-card .song {
@@ -929,15 +939,12 @@ body.sorter-index-body {
   color: #fcffef;
   height: 10%;
   min-width: 0;
-  overflow: hidden;
+  /* Not clipped here: the help tooltip is a child and opens upwards, so overflow:hidden on this row
+     cut it off. The song name clips itself instead — see .song__name. */
 }
 
-.song__name {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* min-width:0 above lets .song__name shrink so the clamp engages; the help icon beside it is
+   flex:0 0 auto and keeps its size. Full text is on each element's title attribute. */
 
 .song__sort-help {
   flex: 0 0 auto;
@@ -1010,7 +1017,8 @@ body.sorter-index-body {
 
 .music-card .media-remount-button {
   position: absolute;
-  top: calc(100% + 4px);
+  /* Above the player, not below it — below overlapped the anime name when it wrapped. */
+  top: 0;
   left: 0;
   z-index: 1;
   width: 24px;
@@ -1031,6 +1039,10 @@ body.sorter-index-body {
 .music-card [data-slot="media"] {
   position: relative;
   height: 70%;
+  /* Reserves a band above the player for the remount control. border-box keeps the slot's outer
+     height at 70%, so nothing below shifts. */
+  box-sizing: border-box;
+  padding-top: 26px;
 }
 
 .music-card--scored [data-slot="media"] {

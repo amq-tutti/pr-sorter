@@ -1,7 +1,9 @@
 import type { config } from '../../customize/config';
 
+export type SongId = number;
+
 export type SongData = {
-    id: number;
+    id: SongId;
     anime?: string | null;
     name: string;
     video?: string | null;
@@ -53,7 +55,37 @@ export function songEntryPrimary(entry: ResolvedSongEntry): ResolvedSong {
     return primary;
 }
 
-export function songEntryId(entry: SongEntry | ResolvedSongEntry): number {
+// Saved sort progress is keyed by song id, so a duplicate id would silently merge two songs into one
+// ranking slot. The sheet importer rejects duplicates, but customize/songList.ts can be hand-edited.
+export type SongCatalog = {
+    entries: ResolvedSongEntry[];
+    ids: SongId[];
+    byId: ReadonlyMap<SongId, ResolvedSongEntry>;
+};
+
+export function createSongCatalog(songs: SongEntry[], fallbackAnimeName: string): SongCatalog {
+    const entries = songs.map((song) => resolveSongEntry(song, fallbackAnimeName));
+    const ids = entries.map((entry) => songEntryId(entry));
+    const byId = new Map<SongId, ResolvedSongEntry>();
+    const duplicates: SongId[] = [];
+
+    for (const [index, id] of ids.entries()) {
+        if (byId.has(id)) {
+            duplicates.push(id);
+            continue;
+        }
+
+        byId.set(id, entries[index]);
+    }
+
+    if (duplicates.length > 0) {
+        throw new Error(`This sorter's song list repeats song id(s): ${[...new Set(duplicates)].join(', ')}.`);
+    }
+
+    return {entries, ids, byId};
+}
+
+export function songEntryId(entry: SongEntry | ResolvedSongEntry): SongId {
     const primary = isSongGroup(entry) || isResolvedSongGroup(entry) ? entry[0] : entry;
     if (!primary) {
         throw new Error('Song groups must contain at least one song.');

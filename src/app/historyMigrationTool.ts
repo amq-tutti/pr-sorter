@@ -1,5 +1,5 @@
 import { choose, chooseAutomatic, currentBattle, type SortChoice, type SortPickKind, type SortState } from '../sorter';
-import { songEntryId, type SongEntry } from '../songs';
+import { songEntryId, type SongCatalog } from '../songs';
 import { normalizeScore } from './internal/songScores';
 import type { Settings, SongScoresById } from './types';
 
@@ -22,12 +22,12 @@ declare global {
     }
 }
 
-export function exposeHistoryMigrationTool(defaultPrefix: string, songs: SongEntry[]): void {
+export function exposeHistoryMigrationTool(defaultPrefix: string, catalog: SongCatalog): void {
     window.prSorterFillAutomaticPickHistory = (prefix = defaultPrefix) =>
-        fillAutomaticPickHistory(prefix, songs);
+        fillAutomaticPickHistory(prefix, catalog);
 }
 
-function fillAutomaticPickHistory(prefix: string, songs: SongEntry[]): MigrationReport {
+function fillAutomaticPickHistory(prefix: string, catalog: SongCatalog): MigrationReport {
     const sortKey = `${prefix}:sort`;
     const scores = readJson<SongScoresById>(`${prefix}:scores`) ?? {};
     const settings = readJson<Settings>(`${prefix}:settings`) ?? {
@@ -75,7 +75,7 @@ function fillAutomaticPickHistory(prefix: string, songs: SongEntry[]): Migration
         rebuilt = choose(stateFromSnapshot(manualSnapshot, rebuilt.history), manualChoice);
 
         const automaticBefore = rebuilt.history.length;
-        rebuilt = applyAutomaticPicksUntilTarget(rebuilt, targetAfterThisPick, songs, scores, settings);
+        rebuilt = applyAutomaticPicksUntilTarget(rebuilt, targetAfterThisPick, catalog, scores, settings);
         automaticPicksInserted += rebuilt.history.length - automaticBefore;
     }
 
@@ -97,19 +97,19 @@ function fillAutomaticPickHistory(prefix: string, songs: SongEntry[]): Migration
 function applyAutomaticPicksUntilTarget(
     sort: SortState,
     target: Snapshot,
-    songs: SongEntry[],
+    catalog: SongCatalog,
     scores: SongScoresById,
     settings: Settings,
 ): SortState {
     let nextSort = sort;
-    const maxIterations = songs.length * songs.length * 2;
+    const maxIterations = catalog.entries.length * catalog.entries.length * 2;
 
     for (let iteration = 0; iteration < maxIterations && !sameSnapshot(nextSort, target); iteration += 1) {
         if (nextSort.pickedCount >= target.pickedCount || nextSort.battleNo >= target.battleNo) {
             return nextSort;
         }
 
-        const choice = automaticChoice(nextSort, songs, scores, settings);
+        const choice = automaticChoice(nextSort, catalog, scores, settings);
         if (!choice) {
             return nextSort;
         }
@@ -122,7 +122,7 @@ function applyAutomaticPicksUntilTarget(
 
 function automaticChoice(
     sort: SortState,
-    songs: SongEntry[],
+    catalog: SongCatalog,
     scores: SongScoresById,
     settings: Settings,
 ): SortChoice | null {
@@ -131,9 +131,9 @@ function automaticChoice(
         return null;
     }
 
-    const [leftIndex, rightIndex] = battle;
-    const leftSong = songs[leftIndex];
-    const rightSong = songs[rightIndex];
+    const [leftId, rightId] = battle;
+    const leftSong = catalog.byId.get(leftId);
+    const rightSong = catalog.byId.get(rightId);
     if (!leftSong || !rightSong) {
         return null;
     }
@@ -197,6 +197,7 @@ function stateFromSnapshot(snapshot: Snapshot, history: Snapshot[]): SortState {
         } : null,
         battleNo: snapshot.battleNo,
         pickedCount: snapshot.pickedCount,
+        placedCount: snapshot.placedCount,
         estimatedBattles: snapshot.estimatedBattles,
         history,
     };
@@ -214,6 +215,7 @@ function snapshotFromSort(sort: SortState): Snapshot {
         } : null,
         battleNo: sort.battleNo,
         pickedCount: sort.pickedCount,
+        placedCount: sort.placedCount,
         estimatedBattles: sort.estimatedBattles,
     };
 }

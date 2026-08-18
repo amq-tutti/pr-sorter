@@ -12,6 +12,7 @@ type SettingsModalProps = {
     googleSpreadsheetSelection: GoogleSpreadsheetSelection | null;
     isConnectingGoogleSheet: boolean;
     legacySorterSaveInfo: LegacySorterSaveInfo | null;
+    savedSortDiagnostic: string | null;
     onClose(): void;
     onChange(settings: Settings): void;
     onChooseGoogleSheet(): void;
@@ -55,6 +56,7 @@ export function SettingsModal({
     googleSpreadsheetSelection,
     isConnectingGoogleSheet,
     legacySorterSaveInfo,
+    savedSortDiagnostic,
     onClose,
     onChange,
     onChooseGoogleSheet,
@@ -207,6 +209,11 @@ export function SettingsModal({
                     <button className="option-button" type="button" onClick={() => importInputRef.current?.click()}>
                         Import
                     </button>
+                    {savedSortDiagnostic ? (
+                        <div className="setting-value">
+                            <span className="setting-warning">{savedSortDiagnostic}</span>
+                        </div>
+                    ) : null}
                     {legacySorterSaveInfo ? (
                         <>
                             <div className="setting-value">

@@ -1,16 +1,16 @@
 import type { SortPickEntry } from '../../sorter';
-import { songEntryAnime, songEntryId, songEntryName, type ResolvedSongEntry } from '../../songs';
+import { songEntryAnime, songEntryId, songEntryName, type ResolvedSongEntry, type SongCatalog } from '../../songs';
 import type { SongScoresById } from '../types';
 
 type HistoryModalProps = {
     open: boolean;
     picks: SortPickEntry[];
-    songs: ResolvedSongEntry[];
+    catalog: SongCatalog;
     scoresBySongId: SongScoresById;
     onClose(): void;
 };
 
-export function HistoryModal({open, picks, songs, scoresBySongId, onClose}: HistoryModalProps) {
+export function HistoryModal({open, picks, catalog, scoresBySongId, onClose}: HistoryModalProps) {
     if (!open) {
         return null;
     }
@@ -25,8 +25,8 @@ export function HistoryModal({open, picks, songs, scoresBySongId, onClose}: Hist
                 ) : (
                     <div className="history-list">
                         {picks.map((pick, index) => {
-                            const leftSong = songs[pick.leftIndex];
-                            const rightSong = songs[pick.rightIndex];
+                            const leftSong = catalog.byId.get(pick.leftId);
+                            const rightSong = catalog.byId.get(pick.rightId);
 
                             return (
                                 <div className="history-entry" key={`${pick.battleNo}-${index}`}>

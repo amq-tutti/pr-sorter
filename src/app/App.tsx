@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { canUndo, choose, chooseAutomatic, createSort, currentBattle, isComplete, pickHistory, progressPercentage, ranksBySongId, type SortChoice, type SortState, undo } from '../sorter';
+import { canUndo, choose, chooseAutomatic, completeRanking, createSort, currentBattle, isComplete, pickHistory, progressPercentage, type ReconcileReport, type SortChoice, type SortState, undo } from '../sorter';
 import { GoogleAuthenticationRequiredError, GooglePickerCanceledError, GoogleWritebackError, UNSUPPORTED_SPREADSHEET_MESSAGE, UNSUPPORTED_SPREADSHEET_SHORT, UnsupportedSpreadsheetError } from '../google/types';
 import { chooseGoogleSpreadsheet, loadScoresFromGoogleSheet, validateSpreadsheetSupported, writePartialRanksToGoogleSheet, writeRanksToGoogleSheet, writeScoresToGoogleSheet } from '../google/googleSheetsWriteback';
 import {
-    resolveSongEntry,
+    createSongCatalog,
     songEntryAnime,
     songEntryId,
     songEntryName,
     type ResolvedSongEntry,
+    type SongCatalog,
     type SongEntry,
 } from '../songs';
 import { ConfirmModal } from './components/ConfirmModal';
@@ -22,7 +23,14 @@ import { SongListModal } from './components/SongListModal';
 import { automaticChoiceForCurrentBattle } from './internal/automaticChoice';
 import { projectedSongSortInfos } from './internal/projectedSortInfo';
 import { isScoreEnabled, normalizeScore } from './internal/songScores';
-import { createStorage, parseSorterStorageSnapshot } from './storage';
+import {
+    describeSavedSort,
+    incompleteRankingMessage,
+    landingTitle,
+    pendingLoadConfirmLabel,
+    pendingLoadMessage,
+} from './internal/savedSortMessages';
+import { createStorage, parseSorterStorageSnapshot, type SortLoadResult } from './storage';
 import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById, SorterAutoPlayMode } from './types';
 
 type AppProps = {
@@ -42,11 +50,12 @@ const hasSavedSortProgress = (sort: SortState): boolean =>
     sort.pickedCount > 0 || sort.history.length > 0 || isComplete(sort);
 
 export function App({config, songs}: AppProps) {
-    const resolvedSongs = useMemo(
-        () => songs.map((song) => resolveSongEntry(song, fallbackAnimeName(config))),
+    const catalog = useMemo(
+        () => createSongCatalog(songs, fallbackAnimeName(config)),
         [config, songs],
     );
-    const songIds = useMemo(() => resolvedSongs.map((song) => songEntryId(song)), [resolvedSongs]);
+    const resolvedSongs = catalog.entries;
+    const songIds = catalog.ids;
     const storage = useMemo(() => createStorage(config, songIds), [config, songIds]);
     const scoreEnabled = isScoreEnabled(config);
     const rankSupported = config.rankSupported !== false;
@@ -64,6 +73,8 @@ export function App({config, songs}: AppProps) {
     const [isSongListOpen, setSongListOpen] = useState(false);
     const [isSettingsOpen, setSettingsOpen] = useState(false);
     const [isStartConfirmOpen, setStartConfirmOpen] = useState(false);
+    const [pendingSaveLoad, setPendingSaveLoad] = useState<Extract<SortLoadResult, {kind: 'ready' | 'needs-consent'}> | null>(null);
+    const [unusableSaveReason, setUnusableSaveReason] = useState<string | null>(null);
     const [isWritingSheet, setWritingSheet] = useState(false);
     const [isWritingSheetScores, setWritingSheetScores] = useState(false);
     const [isConnectingGoogleSheet, setConnectingGoogleSheet] = useState(false);
@@ -148,29 +159,36 @@ export function App({config, songs}: AppProps) {
         };
     }, [googleSpreadsheetSelection, isSongListOpen, scoreEnabled, songIds]);
 
+    const savedSortPreview = useMemo(
+        () => (rankSupported && screen === 'landing' ? storage.peekSort() : null),
+        [rankSupported, screen, storage],
+    );
+
+    const previewSort = savedSortPreview?.kind === 'ready' || savedSortPreview?.kind === 'needs-consent'
+        ? savedSortPreview.sort
+        : null;
+
+    // Derived from the reconciled state on purpose. A finished sort whose list gained songs is no
+    // longer complete, so the button reads "Continue" rather than offering stale results.
     const savedKind: SavedProgressKind = useMemo(() => {
-        if (!rankSupported) {
+        if (!previewSort || !hasSavedSortProgress(previewSort)) {
             return 'none';
         }
 
-        if (screen !== 'landing') {
-            return 'none';
-        }
+        return isComplete(previewSort) ? 'complete' : 'in-progress';
+    }, [previewSort]);
 
-        const savedSort = storage.loadSort();
-        if (!savedSort || !hasSavedSortProgress(savedSort)) {
-            return 'none';
-        }
-
-        return isComplete(savedSort) ? 'complete' : 'in-progress';
-    }, [rankSupported, screen, storage]);
+    const savedListChange = savedSortPreview?.kind === 'ready' || savedSortPreview?.kind === 'needs-consent'
+        ? savedSortPreview.report
+        : null;
 
     function startSort(): void {
         if (!rankSupported) {
             return;
         }
 
-        const savedSort = storage.loadSort();
+        const saved = storage.peekSort();
+        const savedSort = saved.kind === 'ready' || saved.kind === 'needs-consent' ? saved.sort : null;
         if (savedSort && hasSavedSortProgress(savedSort)) {
             setStartConfirmOpen(true);
             return;
@@ -181,7 +199,7 @@ export function App({config, songs}: AppProps) {
 
     function confirmStart(): void {
         setStartConfirmOpen(false);
-        const nextSort = createSort(resolvedSongs.length);
+        const nextSort = createSort(catalog.ids);
         setSort(nextSort);
         setScreen(screenFor(nextSort));
         storage.saveSort(nextSort);
@@ -195,20 +213,43 @@ export function App({config, songs}: AppProps) {
             return;
         }
 
-        const savedSort = storage.loadSort();
-        if (!savedSort) {
+        const loaded = storage.loadSort();
+        if (loaded.kind === 'none') {
             setScreen('landing');
             setSort(null);
             return;
         }
 
+        if (loaded.kind === 'unusable') {
+            setUnusableSaveReason(loaded.reason);
+            return;
+        }
+
+        // Nothing has been written yet. Confirm first so the old save stays exportable on cancel.
+        if (loaded.kind === 'needs-consent' || loaded.report.changed) {
+            setPendingSaveLoad(loaded);
+            return;
+        }
+
+        commitLoadedSort(loaded.sort);
+    }
+
+    function commitLoadedSort(loadedSort: SortState): void {
         const savedScores = storage.loadScores();
-        const nextSort = resolveAutoSkips(savedSort, savedScores, settings);
+        const nextSort = resolveAutoSkips(loadedSort, savedScores, settings);
+        setPendingSaveLoad(null);
         setScoresBySongId(savedScores);
         setSort(nextSort);
         setScreen(screenFor(nextSort));
         storage.saveSort(nextSort);
         setSorterAutoPlayForSort(nextSort, settings, savedScores);
+    }
+
+    function discardUnusableSave(): void {
+        storage.dropSort();
+        setUnusableSaveReason(null);
+        setSort(null);
+        setScreen('landing');
     }
 
     function pick(choice: SortChoice): void {
@@ -338,7 +379,7 @@ export function App({config, songs}: AppProps) {
             currentSort,
             currentSettings,
             currentScoresBySongId,
-            resolvedSongs,
+            catalog,
             scoreEnabled,
             context,
         );
@@ -449,7 +490,7 @@ export function App({config, songs}: AppProps) {
             lastEagerRankSpreadsheetIdRef.current = spreadsheet.id;
         }
 
-        const fixedRanks = fixedProjectedRanksBySongId(currentSort, resolvedSongs, currentScoresBySongId, currentSettings, scoreEnabled);
+        const fixedRanks = fixedProjectedRanksBySongId(currentSort, catalog, currentScoresBySongId, currentSettings, scoreEnabled);
         const ranksToWrite = changedRanks(fixedRanks, lastEagerRankWritebackRef.current);
         if (ranksToWrite.size === 0) {
             return Promise.resolve(0);
@@ -497,7 +538,7 @@ export function App({config, songs}: AppProps) {
         const maxIterations = resolvedSongs.length * resolvedSongs.length * 2;
 
         for (let iteration = 0; iteration < maxIterations; iteration += 1) {
-            const choice = automaticChoiceForCurrentBattle(nextSort, resolvedSongs, currentScoresBySongId, currentSettings, scoreEnabled);
+            const choice = automaticChoiceForCurrentBattle(nextSort, catalog, currentScoresBySongId, currentSettings, scoreEnabled);
             if (!choice) {
                 return nextSort;
             }
@@ -522,14 +563,12 @@ export function App({config, songs}: AppProps) {
             return;
         }
 
-        const [leftIndex, rightIndex] = battle;
-        const leftSong = resolvedSongs[leftIndex];
-        const rightSong = resolvedSongs[rightIndex];
+        const [leftId, rightId] = battle;
+        const leftSong = catalog.byId.get(leftId);
+        const rightSong = catalog.byId.get(rightId);
         if (!leftSong || !rightSong) {
             return;
         }
-        const leftId = songEntryId(leftSong);
-        const rightId = songEntryId(rightSong);
 
         console.info('Auto-skipped comparison', {
             picked: choice,
@@ -568,15 +607,13 @@ export function App({config, songs}: AppProps) {
             return;
         }
 
-        const ranks = ranksBySongId(resolvedSongs, sort);
-        const lines = resolvedSongs.map((song) => {
-            const id = songEntryId(song);
-            const rank = ranks.get(id);
-            if (rank === undefined) {
-                throw new Error(`Missing rank for song id ${id}.`);
-            }
-            return String(rank);
-        });
+        const ranks = completeRanking(resolvedSongs, sort);
+        if (!ranks) {
+            alert(incompleteRankingMessage(resolvedSongs, sort));
+            return;
+        }
+
+        const lines = resolvedSongs.map((song) => String(ranks.get(songEntryId(song)) ?? ''));
 
         void navigator.clipboard
             .writeText(lines.join('\n'))
@@ -639,8 +676,14 @@ export function App({config, songs}: AppProps) {
             return;
         }
 
+        const ranksForSheet = completeRanking(resolvedSongs, sort);
+        if (!ranksForSheet) {
+            alert(incompleteRankingMessage(resolvedSongs, sort));
+            return;
+        }
+
         setWritingSheet(true);
-        void writeRanksToGoogleSheet(writebackConfig, ranksBySongId(resolvedSongs, sort), googleSpreadsheetSelection, normalizedScoresBySongId)
+        void writeRanksToGoogleSheet(writebackConfig, ranksForSheet, googleSpreadsheetSelection, normalizedScoresBySongId)
             .then((spreadsheet) => {
                 alert(`Updated ranks in ${spreadsheet.name}.`);
             })
@@ -867,7 +910,10 @@ export function App({config, songs}: AppProps) {
     function reloadStateFromStorage(): void {
         const importedSettings = storage.loadSettings();
         const importedScores = storage.loadScores();
-        const importedSort = storage.loadSort();
+        const importedLoad = storage.loadSort();
+        const importedSort = importedLoad.kind === 'ready' || importedLoad.kind === 'needs-consent'
+            ? importedLoad.sort
+            : null;
         const importedGoogleSpreadsheetSelection = storage.loadGoogleSpreadsheetSelection();
 
         pendingScoreWritebackRef.current.clear();
@@ -916,6 +962,7 @@ export function App({config, songs}: AppProps) {
         (googleSpreadsheetSelection?.writebackSupported === false ? UNSUPPORTED_SPREADSHEET_SHORT : null);
     const writeSheetSetupReason = config.googleSheets && !googleSpreadsheetSelection ? 'Choose a Google Sheet in Settings.' : null;
     const legacySorterSaveInfo = isSettingsOpen && rankSupported ? storage.findLegacySorterSave() : null;
+    const savedSortDiagnostic = isSettingsOpen && rankSupported ? describeSavedSort(storage.peekSort(), catalog.ids.length) : null;
 
     const progressLabel =
         sort && screen === 'complete'
@@ -927,7 +974,7 @@ export function App({config, songs}: AppProps) {
         sort && screen === 'complete'
             ? 100
             : sort && screen === 'sorting'
-                ? progressPercentage(sort, resolvedSongs.length)
+                ? progressPercentage(sort)
                 : 0;
 
     const currentPlaylistSongIndex = playlistOrder[playlistPosition] ?? 0;
@@ -944,6 +991,23 @@ export function App({config, songs}: AppProps) {
                 onConfirm={confirmStart}
                 onCancel={() => setStartConfirmOpen(false)}
             />
+            <ConfirmModal
+                open={pendingSaveLoad !== null}
+                title={pendingSaveLoad?.kind === 'needs-consent' ? 'Check saved progress' : 'Song list updated'}
+                message={pendingSaveLoad ? pendingLoadMessage(pendingSaveLoad, catalog.ids.length) : ''}
+                confirmLabel={pendingSaveLoad ? pendingLoadConfirmLabel(pendingSaveLoad) : ''}
+                onConfirm={() => pendingSaveLoad && commitLoadedSort(pendingSaveLoad.sort)}
+                onCancel={() => setPendingSaveLoad(null)}
+            />
+            <ConfirmModal
+                open={unusableSaveReason !== null}
+                title="Saved progress cannot be used"
+                message={`${unusableSaveReason ?? ''} You can export it from Settings before discarding.`}
+                confirmLabel="Discard progress"
+                cancelLabel="Keep"
+                onConfirm={discardUnusableSave}
+                onCancel={() => setUnusableSaveReason(null)}
+            />
             <SettingsModal
                 open={isSettingsOpen}
                 settings={settings}
@@ -953,6 +1017,7 @@ export function App({config, songs}: AppProps) {
                 googleSpreadsheetSelection={googleSpreadsheetSelection}
                 isConnectingGoogleSheet={isConnectingGoogleSheet}
                 legacySorterSaveInfo={legacySorterSaveInfo}
+                savedSortDiagnostic={savedSortDiagnostic}
                 onClose={() => setSettingsOpen(false)}
                 onChange={updateSettings}
                 onChooseGoogleSheet={chooseSheet}
@@ -964,13 +1029,13 @@ export function App({config, songs}: AppProps) {
             <HistoryModal
                 open={isHistoryOpen}
                 picks={sort ? pickHistory(sort) : []}
-                songs={resolvedSongs}
+                catalog={catalog}
                 scoresBySongId={scoresBySongId}
                 onClose={() => setHistoryOpen(false)}
             />
             <SongListModal
                 open={isSongListOpen}
-                songs={resolvedSongs}
+                catalog={catalog}
                 sort={sort}
                 settings={settings}
                 scoreEnabled={scoreEnabled}
@@ -987,7 +1052,11 @@ export function App({config, songs}: AppProps) {
             <div className={`main-page ${screen === 'landing' ? 'main-page--landing' : ''}`}>
                 {screen !== 'sorting' ? (
                     <div className="title" style={screen === 'complete' ? {height: '3%'} : undefined}>
-                        {screen === 'complete' ? 'Results' : screen === 'playlist' ? 'Playlist' : landingTitle(savedKind, rankSupported)}
+                        {screen === 'complete'
+                        ? 'Results'
+                        : screen === 'playlist'
+                            ? 'Playlist'
+                            : landingTitle(savedKind, rankSupported, savedListChange)}
                     </div>
                 ) : null}
 
@@ -1047,7 +1116,7 @@ export function App({config, songs}: AppProps) {
                             {screen === 'sorting' ? (
                                 <Duel
                                     config={config}
-                                    songs={resolvedSongs}
+                                    catalog={catalog}
                                     sort={sort}
                                     settings={settings}
                                     scoreEnabled={scoreEnabled}
@@ -1123,20 +1192,20 @@ function normalizedScoresForWriteback(scoresBySongId: SongScoresById): Map<numbe
 
 function fixedProjectedRanksBySongId(
     sort: SortState,
-    songs: ResolvedSongEntry[],
+    catalog: SongCatalog,
     scoresBySongId: SongScoresById,
     settings: Settings,
     scoreEnabled: boolean,
 ): Map<number, number> {
-    const projectedInfos = projectedSongSortInfos(sort, songs.length, {songs, scoresBySongId, settings, scoreEnabled});
+    const projectedInfos = projectedSongSortInfos(sort, catalog.ids, {catalog, scoresBySongId, settings, scoreEnabled});
     const ranks = new Map<number, number>();
 
-    songs.forEach((song, index) => {
-        const info = projectedInfos.get(index);
+    for (const songId of catalog.ids) {
+        const info = projectedInfos.get(songId);
         if (info && info.minRank === info.maxRank) {
-            ranks.set(songEntryId(song), info.minRank);
+            ranks.set(songId, info.minRank);
         }
-    });
+    }
 
     return ranks;
 }
@@ -1147,23 +1216,7 @@ function changedRanks(currentRanks: Map<number, number>, lastWrittenRanks: Map<n
     );
 }
 
-function landingTitle(savedKind: SavedProgressKind, rankSupported: boolean): string {
-    if (!rankSupported) {
-        return 'Press "Playlist" to browse songs.';
-    }
-
-    if (savedKind === 'complete') {
-        return 'Press "Start" to begin sorting or "Show Results" to display results of previous sorting.';
-    }
-
-    if (savedKind === 'in-progress') {
-        return 'Press "Start" to begin sorting or "Continue" to load saved progress and resume where you left.';
-    }
-
-    return 'Press "Start" to begin sorting.';
-}
-
-function fallbackAnimeName(config: AppConfig): string {
+export function fallbackAnimeName(config: AppConfig): string {
     return config.fallbackAnimeName?.trim() || config.title.replace(/\s+Sorter$/i, '').trim() || config.title;
 }
 
@@ -1178,7 +1231,7 @@ function initialSorterAutoPlaySide(
     sort: SortState | null,
     settings: Settings,
     scoresBySongId: SongScoresById,
-    songs: ResolvedSongEntry[],
+    catalog: SongCatalog,
     scoreEnabled: boolean,
     context?: { previousBattle: [number, number] | null; choice: SortChoice },
 ): SortChoice | null {
@@ -1200,7 +1253,7 @@ function initialSorterAutoPlaySide(
     }
 
     if (settings.sorterAutoPlayMode === 'higher-score') {
-        return higherScoredBattleSide(battle, scoresBySongId, songs, scoreEnabled) ?? 'left';
+        return higherScoredBattleSide(battle, scoresBySongId, catalog, scoreEnabled) ?? 'left';
     }
 
     return 'left';
@@ -1238,16 +1291,16 @@ function changedSideForBattleTransition(
 function higherScoredBattleSide(
     battle: [number, number],
     scoresBySongId: SongScoresById,
-    songs: ResolvedSongEntry[],
+    catalog: SongCatalog,
     scoreEnabled: boolean,
 ): SortChoice | null {
     if (!scoreEnabled) {
         return null;
     }
 
-    const [leftIndex, rightIndex] = battle;
-    const leftSong = songs[leftIndex];
-    const rightSong = songs[rightIndex];
+    const [leftId, rightId] = battle;
+    const leftSong = catalog.byId.get(leftId);
+    const rightSong = catalog.byId.get(rightId);
     if (!leftSong || !rightSong) {
         return null;
     }
