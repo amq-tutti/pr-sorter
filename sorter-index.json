@@ -109,6 +109,15 @@
       "deadline": "2026-05-30T22:00:00.000Z"
     },
     {
+      "slug": "nana-mizuki",
+      "title": "Nana Mizuki",
+      "description": "Party rank sorter for Nana Mizuki solo/duet anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-10-17T04:00:00.000Z"
+    },
+    {
       "slug": "princession-orchestra",
       "title": "Princession Orchestra",
       "description": "Party rank sorter for all Princession Orchestra songs (anime + image songs)",
