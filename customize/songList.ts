@@ -13,18 +13,4 @@ export const songList = [
     {"id": 8, "anime": "Ao no Hako - Ending 2", "name": "\"Contrast\" by TOMOO", "video": "https://eudist.animemusicquiz.com/qmcqk3.webm", "mp3": "https://eudist.animemusicquiz.com/l2sgqo.mp3"},
     {"id": 9, "anime": "Ao no Miburo - Ending 2", "name": "\"Fragment\" by osage", "video": "https://eudist.animemusicquiz.com/8b8iva.webm", "mp3": "https://eudist.animemusicquiz.com/0yt4lm.mp3"},
     {"id": 10, "anime": "Arafou Otoko no Isekai Tsuuhan - Ending 1", "name": "\"Aicraft\" by Kiminone", "video": "https://eudist.animemusicquiz.com/ohlrpc.webm", "mp3": "https://eudist.animemusicquiz.com/74jbjn.mp3"},
-     {
-        "id": 11,
-        "anime": "Show By Rock!! Stars!! - ED1",
-        "name": "\"Hoshizora Light Story\" by Mashumairesh!!",
-        "video": "https://naedist.animemusicquiz.com/gwvynp.webm",
-        "mp3": "https://naedist.animemusicquiz.com/5u4w9l.mp3"
-    },
-    {
-        "id": 12,
-        "anime": "Show By Rock!! Stars!! - Insert",
-        "name": "\"Speed Up\" by Mashumairesh!!",
-        "video": "https://naedist.animemusicquiz.com/xneo4h.webm",
-        "mp3": "https://naedist.animemusicquiz.com/yggyle.mp3"
-    },
 ] satisfies Song[];
