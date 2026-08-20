@@ -305,7 +305,7 @@ export const songList = [
         "name": "\"Preserved Roses\" by T.M.Revolution×Nana Mizuki",
         "video": "https://naedist.animemusicquiz.com/yrlenq.webm",
         "mp3": null,
-        "full": "https://www.youtube.com/watch?v=_KZqEPJjvjw"
+        "full": "https://www.youtube.com/watch?v=goAW82vtoUk"
     },
     {
         "id": 39,
