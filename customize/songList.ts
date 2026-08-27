@@ -617,7 +617,7 @@ export const songList = [
         "name": "\"Obake Zukan no Uta ~Itsudemo Dokodemo~\" by Nana Mizuki",
         "video": "https://naedist.animemusicquiz.com/vvflne.webm",
         "mp3": null,
-        "full": "https://www.youtube.com/watch?v=HvnOjWr5SqE"
+        "full": "https://files.catbox.moe/597i5h.webm"
     },
     {
         "id": 78,
