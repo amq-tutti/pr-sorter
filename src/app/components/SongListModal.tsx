@@ -11,6 +11,7 @@ import {
     type SongCatalog,
 } from '../../songs';
 import { projectedSongSortInfos } from '../internal/projectedSortInfo';
+import { compareScores, compareText, type SortDirection } from '../internal/tableSorting';
 import type { GoogleSpreadsheetSelection, Settings, SongScoresById } from '../types';
 
 type SheetScoreStatus =
@@ -37,7 +38,6 @@ type SongListModalProps = {
 };
 
 type SortColumn = 'id' | 'anime' | 'song' | 'score' | 'sheetScore';
-type SortDirection = 'asc' | 'desc';
 
 export function SongListModal({
     open,
@@ -221,12 +221,12 @@ function SortableHeader({
     return (
         <th>
             <button
-                className={`song-list-sort-header${active ? ' song-list-sort-header--active' : ''}`}
+                className={`table-sort-header${active ? ' table-sort-header--active' : ''}`}
                 type="button"
                 onClick={() => onSort(column)}
             >
                 <span>{children}</span>
-                <span className="song-list-sort-header__indicator">{active ? (direction === 'asc' ? '^' : 'v') : ''}</span>
+                <span className="table-sort-header__indicator">{active ? (direction === 'asc' ? '^' : 'v') : ''}</span>
             </button>
         </th>
     );
@@ -272,38 +272,6 @@ function compareByColumn(
     }
 
     return compareScores(sheetScoresBySongId[leftId], sheetScoresBySongId[rightId]);
-}
-
-function compareText(left: string, right: string): number {
-    return left.localeCompare(right, undefined, {numeric: true, sensitivity: 'base'});
-}
-
-function compareScores(left: string | undefined, right: string | undefined): number {
-    const leftScore = parseScore(left);
-    const rightScore = parseScore(right);
-
-    if (leftScore === null && rightScore === null) {
-        return compareText(left ?? '', right ?? '');
-    }
-
-    if (leftScore === null) {
-        return 1;
-    }
-
-    if (rightScore === null) {
-        return -1;
-    }
-
-    return leftScore - rightScore;
-}
-
-function parseScore(score: string | undefined): number | null {
-    if (!score?.trim()) {
-        return null;
-    }
-
-    const parsed = Number.parseFloat(score);
-    return Number.isFinite(parsed) ? parsed : null;
 }
 
 function formatRankRange(minRank: number, maxRank: number): string {

@@ -983,6 +983,10 @@ export function App({config, songs}: AppProps) {
 
     return (
         <>
+            <a className="collection-back-link" href="../">
+                <span className="collection-back-link__icon" aria-hidden="true">&#8249;</span>
+                <span>Sorter Collection</span>
+            </a>
             <ConfirmModal
                 open={isStartConfirmOpen}
                 title="Start new sort"
