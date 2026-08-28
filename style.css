@@ -811,9 +811,13 @@ body.sorter-index-body {
   outline: none;
 }
 
+/* An SVG rather than a text chevron: a glyph sits wherever the font's metrics put it inside its
+   em box, so flex centring lines up the box while the mark itself reads low. */
 .collection-back-link__icon {
-  font-size: 1.4em;
-  line-height: 1;
+  display: block;
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
 }
 
 .button-container {

@@ -984,7 +984,9 @@ export function App({config, songs}: AppProps) {
     return (
         <>
             <a className="collection-back-link" href="../">
-                <span className="collection-back-link__icon" aria-hidden="true">&#8249;</span>
+                <svg className="collection-back-link__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
                 <span>Sorter Collection</span>
             </a>
             <ConfirmModal
