@@ -55,7 +55,7 @@ export const songList = [
         "id": 7,
         "anime": "CODE:SEED -Seika no Uta- - OP",
         "name": "\"Getsuuntan-lunaring-\" by Asaka",
-        "video": "https://www.youtube.com/watch?v=61eKQhca4tI",
+        "video": "https://files.catbox.moe/951meu.webm",
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=y-b3HHwyv8c"
     },
