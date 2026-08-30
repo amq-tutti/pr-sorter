@@ -37,6 +37,15 @@
       "deadline": "2026-06-19T22:00:00.000Z"
     },
     {
+      "slug": "2026-summer-ops",
+      "title": "2026 Summer OPs",
+      "description": "Party rank sorter for all 2026 Summer anime openings",
+      "tags": [
+        "Seasonal"
+      ],
+      "deadline": "2026-09-24T03:59:00.000Z"
+    },
+    {
       "slug": "asaka",
       "title": "Asaka",
       "description": "Party rank sorter for Asaka anime/game songs",
