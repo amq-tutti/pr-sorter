@@ -355,4 +355,12 @@ export const songList = [
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=Rgsum_w9Ug0"
     },
+    {
+        "id": 45,
+        "anime": "Muv-Luv Girls Garden - MV",
+        "name": "\"First and Last Serenade\" by Asaka",
+        "video": "https://www.youtube.com/watch?v=-NqxikNInRo",
+        "mp3": null,
+        "full": "https://www.youtube.com/watch?v=-NqxikNInRo"
+    }
 ] satisfies Song[];
