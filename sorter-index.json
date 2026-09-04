@@ -209,6 +209,11 @@
         "suara",
         "yuuko-natsuyoshi"
       ]
+    },
+    {
+      "title": "Shuuka",
+      "indexUrl": "https://shuukaa.github.io/pr-sorter/",
+      "excludedSorterSlugs": []
     }
   ]
 }
