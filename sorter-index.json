@@ -118,6 +118,15 @@
       "deadline": "2026-07-03T22:00:00.000Z"
     },
     {
+      "slug": "mami-kingetsu",
+      "title": "Mami Kingetsu",
+      "description": "Party rank sorter for Mami Kingetsu anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-09-25T15:59:00.000Z"
+    },
+    {
       "slug": "movie-anisongs",
       "title": "Movie Anisongs",
       "description": "Party rank sorter for nominated songs from anime movies",
