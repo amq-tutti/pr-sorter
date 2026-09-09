@@ -154,6 +154,15 @@
       "deadline": "2026-06-11T22:00:00.000Z"
     },
     {
+      "slug": "risa-youki",
+      "title": "Risa Youki",
+      "description": "Party rank sorter for Risa Youki anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-09-25T15:59:00.000Z"
+    },
+    {
       "slug": "si-vis",
       "title": "SI-VIS",
       "description": "Party rank sorter for SI-VIS anime songs",
