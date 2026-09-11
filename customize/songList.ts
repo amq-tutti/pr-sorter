@@ -563,4 +563,11 @@ export const songList = [
         "video": "https://naedist.animemusicquiz.com/49wemf.webm",
         "mp3": "https://naedist.animemusicquiz.com/3upqye.mp3"
     },
+    {
+        "id": 81,
+        "anime": "Mushoku Tensei III: Isekai Ittara Honki Dasu - Opening 3",
+        "name": "\"Hikari no Uta\" by Yuiko Ohara",
+        "video": "https://naedist.animemusicquiz.com/v8xalkryan9ueljo.webm",
+        "mp3": "https://naedist.animemusicquiz.com/itnoua.mp3"
+    },
 ] satisfies Song[];
