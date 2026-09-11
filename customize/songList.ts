@@ -612,4 +612,11 @@ export const songList = [
         "video": "https://naedist.animemusicquiz.com/h1t8k3.webm",
         "mp3": "https://naedist.animemusicquiz.com/ohy9yu.mp3"
     },
+    {
+        "id": 88,
+        "anime": "Kimi ga Shinu made Koi o Shitai - Ending 2",
+        "name": "\"Statice\" by Asami Seto & Yui Ishikawa",
+        "video": "https://naedist.animemusicquiz.com/x6etgd.webm",
+        "mp3": "https://naedist.animemusicquiz.com/ppx9o4.mp3"
+    },
 ] satisfies Song[];
