@@ -8,3 +8,4 @@ pages-dist/
 .logs/
 public/sorter-index.json
 scripts/
+.DS_Store
