@@ -820,6 +820,138 @@ body.sorter-index-body {
   height: 1.05em;
 }
 
+/* Stacked above modals on purpose: it's a scratchpad for use while browsing the song list or history. */
+.notepad-trigger {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1010;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: #40ab47a6;
+  color: #e5e5e5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.notepad-trigger:hover,
+.notepad-trigger:focus-visible,
+.notepad-trigger--active {
+  background-color: #45a049;
+  outline: none;
+}
+
+.notepad-trigger__icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.notepad {
+  position: fixed;
+  z-index: 1011;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: rgba(20, 30, 60, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  color: #f0fff2;
+  overflow: hidden;
+}
+
+.notepad__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  background: rgba(0, 10, 28, 0.35);
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+}
+
+.notepad__title {
+  color: #a0ffac;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.notepad__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #e5e5e5;
+  cursor: pointer;
+}
+
+.notepad__close:hover,
+.notepad__close:focus-visible {
+  background: #7e0000;
+  color: #ffffff;
+  outline: none;
+}
+
+.notepad__close svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.notepad__text {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 10px 12px 18px;
+  border: none;
+  background: transparent;
+  color: #f0fff2;
+  font: 14px/1.45 Arial, sans-serif;
+  resize: none;
+  scrollbar-color: rgba(160, 255, 172, 0.3) transparent;
+  scrollbar-width: thin;
+}
+
+.notepad__text::placeholder {
+  color: rgba(252, 255, 239, 0.45);
+}
+
+.notepad__text:focus {
+  outline: none;
+}
+
+.notepad__resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(
+    135deg,
+    transparent 45%,
+    rgba(252, 255, 239, 0.45) 45% 52%,
+    transparent 52% 65%,
+    rgba(252, 255, 239, 0.45) 65% 72%,
+    transparent 72%
+  );
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
 .button-container {
   min-height: 5%;
   box-sizing: border-box;

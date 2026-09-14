@@ -46,6 +46,14 @@ export type Settings = {
     playlistAutoAdvance: PlaylistAutoAdvance;
 };
 
+/** Viewport-pixel geometry of the floating notepad, as last placed by the user. */
+export type NotepadLayout = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
+
 export type Screen = 'landing' | 'sorting' | 'complete' | 'playlist';
 
 export type SavedProgressKind = 'none' | 'in-progress' | 'complete';

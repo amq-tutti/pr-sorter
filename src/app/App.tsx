@@ -15,6 +15,7 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { Controls } from './components/Controls';
 import { Duel } from './components/Duel';
 import { HistoryModal } from './components/HistoryModal';
+import { Notepad } from './components/Notepad';
 import { Playlist, type PlaylistMode, type PlaylistScoreFilter } from './components/Playlist';
 import { Progress } from './components/Progress';
 import { Results } from './components/Results';
@@ -31,7 +32,7 @@ import {
     pendingLoadMessage,
 } from './internal/savedSortMessages';
 import { createStorage, parseSorterStorageSnapshot, type SortLoadResult } from './storage';
-import type { AppConfig, GoogleSpreadsheetSelection, SavedProgressKind, Screen, Settings, SongScoresById, SorterAutoPlayMode } from './types';
+import type { AppConfig, GoogleSpreadsheetSelection, NotepadLayout, SavedProgressKind, Screen, Settings, SongScoresById, SorterAutoPlayMode } from './types';
 
 type AppProps = {
     config: AppConfig;
@@ -62,6 +63,8 @@ export function App({config, songs}: AppProps) {
     const [screen, setScreen] = useState<Screen>('landing');
     const [settings, setSettings] = useState<Settings>(() => storage.loadSettings());
     const [scoresBySongId, setScoresBySongId] = useState<SongScoresById>(() => storage.loadScores());
+    const [notes, setNotes] = useState(() => storage.loadNotes());
+    const [notepadLayout, setNotepadLayout] = useState<NotepadLayout | null>(() => storage.loadNotepadLayout());
     const [sorterAutoPlaySide, setSorterAutoPlaySide] = useState<SortChoice | null>(null);
     const [sorterAutoPlayKey, setSorterAutoPlayKey] = useState(0);
     const [playlistMode, setPlaylistMode] = useState<PlaylistMode>('in-order');
@@ -285,6 +288,16 @@ export function App({config, songs}: AppProps) {
         if (screen === 'sorting') {
             setSorterAutoPlayForSort(sort, nextSettings, scoresBySongId);
         }
+    }
+
+    function updateNotes(nextNotes: string): void {
+        setNotes(nextNotes);
+        storage.saveNotes(nextNotes);
+    }
+
+    function updateNotepadLayout(nextLayout: NotepadLayout): void {
+        setNotepadLayout(nextLayout);
+        storage.saveNotepadLayout(nextLayout);
     }
 
     function openPlaylist(): void {
@@ -919,6 +932,8 @@ export function App({config, songs}: AppProps) {
         pendingScoreWritebackRef.current.clear();
         setSettings(importedSettings);
         setScoresBySongId(importedScores);
+        setNotes(storage.loadNotes());
+        setNotepadLayout(storage.loadNotepadLayout());
         setSort(rankSupported && importedSort && hasSavedSortProgress(importedSort) ? importedSort : null);
         setScreen(rankSupported && importedSort && hasSavedSortProgress(importedSort) ? screenFor(importedSort) : 'landing');
         setGoogleSpreadsheetSelection(importedGoogleSpreadsheetSelection);
@@ -1054,6 +1069,12 @@ export function App({config, songs}: AppProps) {
                 onScoreChange={updateScore}
                 onWriteSheetScores={writeSongListScoresToSheet}
                 onClose={() => setSongListOpen(false)}
+            />
+            <Notepad
+                notes={notes}
+                layout={notepadLayout}
+                onNotesChange={updateNotes}
+                onLayoutChange={updateNotepadLayout}
             />
             <div className={`main-page ${screen === 'landing' ? 'main-page--landing' : ''}`}>
                 {screen !== 'sorting' ? (

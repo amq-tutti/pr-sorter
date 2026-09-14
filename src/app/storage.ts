@@ -1,6 +1,6 @@
 import { reconcileSort, type ReconcileReport, type SortState } from '../sorter';
 import { z } from 'zod';
-import type { AppConfig, GoogleSpreadsheetSelection, Settings, SongScoresById } from './types';
+import type { AppConfig, GoogleSpreadsheetSelection, NotepadLayout, Settings, SongScoresById } from './types';
 import { mapLegacyIndexesToIds, readSavedSort, SORT_SAVE_VERSION, type LoadedSave } from './internal/savedSortValidation';
 import { isScoreEnabled } from './internal/songScores';
 import { findLegacySorterSave, migrateLegacySorterSave, type LegacySorterSaveInfo } from './legacySorterMigration';
@@ -30,6 +30,10 @@ type StorageFacade = {
     loadGoogleSpreadsheetSelection(): GoogleSpreadsheetSelection | null;
     saveGoogleSpreadsheetSelection(selection: GoogleSpreadsheetSelection): void;
     clearGoogleSpreadsheetSelection(): void;
+    loadNotes(): string;
+    saveNotes(notes: string): void;
+    loadNotepadLayout(): NotepadLayout | null;
+    saveNotepadLayout(layout: NotepadLayout): void;
     exportSorterState(): SorterStorageSnapshot;
     importSorterState(snapshot: SorterStorageSnapshot): SorterStorageImportResult;
     findLegacySorterSave(): LegacySorterSaveInfo | null;
@@ -64,12 +68,21 @@ const googleSpreadsheetSelectionSchema = z.object({
     writebackSupported: z.boolean().optional(),
 });
 
+const notepadLayoutSchema = z.object({
+    x: z.number(),
+    y: z.number(),
+    width: z.number().positive(),
+    height: z.number().positive(),
+});
+
 export function createStorage(config: AppConfig, songIds: number[]): StorageFacade {
     const keyPrefix = `${config.localStoragePrefix}:`;
     const sortKey = `${config.localStoragePrefix}:sort`;
     const scoresKey = `${config.localStoragePrefix}:scores`;
     const settingsKey = `${config.localStoragePrefix}:settings`;
     const googleSpreadsheetSelectionKey = `${config.localStoragePrefix}:google-spreadsheet-selection`;
+    const notesKey = `${config.localStoragePrefix}:notes`;
+    const notepadLayoutKey = `${config.localStoragePrefix}:notepad-layout`;
     const scoreEnabled = isScoreEnabled(config);
     const currentSongIds = new Set(songIds);
     const songCount = songIds.length;
@@ -228,6 +241,39 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
         localStorage.removeItem(googleSpreadsheetSelectionKey);
     }
 
+    // Notes are free text, so they are stored raw rather than as JSON.
+    function loadNotes(): string {
+        return localStorage.getItem(notesKey) ?? '';
+    }
+
+    function saveNotes(notes: string): void {
+        localStorage.setItem(notesKey, notes);
+    }
+
+    function loadNotepadLayout(): NotepadLayout | null {
+        const raw = localStorage.getItem(notepadLayoutKey);
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            const parsed: unknown = JSON.parse(raw);
+            const result = notepadLayoutSchema.safeParse(parsed);
+            if (result.success) {
+                return result.data;
+            }
+        } catch {
+            // Invalid notepad layout is removed below.
+        }
+
+        localStorage.removeItem(notepadLayoutKey);
+        return null;
+    }
+
+    function saveNotepadLayout(layout: NotepadLayout): void {
+        localStorage.setItem(notepadLayoutKey, JSON.stringify(layout));
+    }
+
     function exportSorterState(): SorterStorageSnapshot {
         const entries: Record<string, string> = {};
 
@@ -317,6 +363,10 @@ export function createStorage(config: AppConfig, songIds: number[]): StorageFaca
         loadGoogleSpreadsheetSelection,
         saveGoogleSpreadsheetSelection,
         clearGoogleSpreadsheetSelection,
+        loadNotes,
+        saveNotes,
+        loadNotepadLayout,
+        saveNotepadLayout,
         exportSorterState,
         importSorterState,
         findLegacySorterSave: findLegacySave,
