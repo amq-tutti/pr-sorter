@@ -546,8 +546,8 @@ export const songList = [
         "id": 78,
         "anime": "Toumei na Yoru ni Kakeru Kimi to, Me ni Mienai Koi o Shita. - Ending 1",
         "name": "\"Hikari\" by Yui Sakurai",
-        "video": "https://naedist.animemusicquiz.com/a32sx1.webm",
-        "mp3": "https://naedist.animemusicquiz.com/621r11.mp3"
+        "video": "https://nawdist.animemusicquiz.com/4dj2e3.webm",
+        "mp3": null,
     },
     {
         "id": 79,
