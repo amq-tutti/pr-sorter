@@ -322,8 +322,8 @@ export const songList = [
         "id": 46,
         "anime": "Nijusseiki Denki Mokuroku: Eureka Evrika - Opening 1",
         "name": "\"Eureka Evrika\" by Luna Goami",
-        "video": "https://naedist.animemusicquiz.com/ix35cm.webm",
-        "mp3": "https://naedist.animemusicquiz.com/4zi9fp.mp3"
+        "video": "https://nawdist.animemusicquiz.com/6iaunj.webm",
+        "mp3": null,
     },
     {
         "id": 47,
@@ -504,8 +504,8 @@ export const songList = [
         "id": 72,
         "anime": "Toumei na Yoru ni Kakeru Kimi to, Me ni Mienai Koi o Shita. - Opening 1",
         "name": "\"Hitohira\" by Motohiro Hata",
-        "video": "https://naedist.animemusicquiz.com/n5bwrf.webm",
-        "mp3": "https://naedist.animemusicquiz.com/xseopo.mp3"
+        "video": "https://nawdist.animemusicquiz.com/8r370a.webm",
+        "mp3": null,
     },
     {
         "id": 73,
