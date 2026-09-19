@@ -57,7 +57,7 @@ export const songList = [
         "anime": "Bleach: Sennen Kessen-hen - Kashin-tan - Ending 1",
         "name": "\"Rasen\" by 9Lana",
         "video": "https://naedist.animemusicquiz.com/s2mk6z.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/j0ow98.mp3",
     },
     {
         "id": 9,
@@ -70,8 +70,8 @@ export const songList = [
         "id": 10,
         "anime": "Bungo Stray Dogs Wan! 2 - Ending 1",
         "name": "\"Bokura\" by Kensho Ono",
-        "video": "https://nawdist.animemusicquiz.com/914k6s.webm",
-        "mp3": null,
+        "video": "https://naedist.animemusicquiz.com/914k6s.webm",
+        "mp3": "https://naedist.animemusicquiz.com/3oro32.mp3",
     },
     {
         "id": 11,
@@ -309,7 +309,7 @@ export const songList = [
         "anime": "Meitantei Precure - Ending 2",
         "name": "\"Itsuka Wakaru☆Kitto Aeru\" by Akane Kumada & Yuuka Masui",
         "video": "https://naedist.animemusicquiz.com/zyu8ee.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/m6297o.mp3",
     },
     {
         "id": 45,
@@ -337,7 +337,7 @@ export const songList = [
         "anime": "Neko no Kura-chan: Kurare Oukoku Tairiku no Lutte Amor - Ending 2",
         "name": "\"BOOGEYCAT\" by UNIVER23",
         "video": "https://naedist.animemusicquiz.com/vz7w2r.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/e6qur5.mp3",
     },
     {
         "id": 49,
@@ -477,7 +477,7 @@ export const songList = [
         "anime": "Super no Ura de Yani Suu Futari (ABEMA) - Ending 1",
         "name": "\"NIGHT DANCER\" by imase",
         "video": "https://naedist.animemusicquiz.com/p5d1rb.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/pyr7wm.mp3",
     },
     {
         "id": 69,
@@ -546,7 +546,7 @@ export const songList = [
         "id": 78,
         "anime": "Toumei na Yoru ni Kakeru Kimi to, Me ni Mienai Koi o Shita. - Ending 1",
         "name": "\"Hikari\" by Yui Sakurai",
-        "video": "https://nawdist.animemusicquiz.com/4dj2e3.webm",
+        "video": "https://naedist.animemusicquiz.com/4dj2e3.webm",
         "mp3": null,
     },
     {
