@@ -70,8 +70,8 @@ export const songList = [
         "id": 10,
         "anime": "Bungo Stray Dogs Wan! 2 - Ending 1",
         "name": "\"Bokura\" by Kensho Ono",
-        "video": "https://naedist.animemusicquiz.com/jrk12y.webm",
-        "mp3": "https://naedist.animemusicquiz.com/6wgaja.mp3"
+        "video": "https://nawdist.animemusicquiz.com/914k6s.webm",
+        "mp3": null,
     },
     {
         "id": 11,
@@ -161,8 +161,8 @@ export const songList = [
         "id": 23,
         "anime": "Hokuto no Ken: Kenou-gun Zako-tachi no Banka Part 2 - Ending 1",
         "name": "\"Shiroi Chou ga Tondara\" by ITSUKA▶︎ feat. Dr.Washington",
-        "video": "https://naedist.animemusicquiz.com/2w3hio.webm",
-        "mp3": "https://naedist.animemusicquiz.com/7xomik.mp3"
+        "video": "https://naedist.animemusicquiz.com/58zv8h.webm",
+        "mp3": "https://naedist.animemusicquiz.com/nqfpw1.mp3",
     },
     {
         "id": 24,
