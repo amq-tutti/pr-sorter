@@ -36,7 +36,7 @@ export const songList = [
         "anime": "Bleach: Sennen Kessen-hen - Kashin-tan - Opening 1",
         "name": "\"I-BULL\" by jo0ji",
         "video": "https://naedist.animemusicquiz.com/gfdjpx.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/plzzyp.mp3",
     },
     {
         "id": 6,
@@ -281,28 +281,28 @@ export const songList = [
         "anime": "Mushoku Tensei III: Isekai Ittara Honki Dasu - Opening 1",
         "name": "\"Ketsui no Uta\" by Yuiko Ohara",
         "video": "https://naedist.animemusicquiz.com/9u1kac3dtkyah4c3.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/bkgg6p.mp3",
     },
     {
         "id": 41,
         "anime": "Mushoku Tensei III: Isekai Ittara Honki Dasu - Opening 2",
         "name": "\"Mebuki no Uta\" by Yuiko Ohara",
         "video": "https://naedist.animemusicquiz.com/f7nsc14yp6dkbb91.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/5oh9uc.mp3",
     },
     {
         "id": 42,
         "anime": "Neko no Kura-chan: Kurare Oukoku Tairiku no Lutte Amor - Opening 2",
         "name": "\"TickTack\" by Next☆Rico",
         "video": "https://naedist.animemusicquiz.com/g7m714.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/911hz7.mp3",
     },
     {
         "id": 43,
         "anime": "Neko no Kura-chan: Kurare Oukoku Tairiku no Lutte Amor - Opening 3",
         "name": "\"Hatsukoi no Aizu\" by Mi'Line Hearts",
         "video": "https://naedist.animemusicquiz.com/kvjj1b.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/xbriy8.mp3",
     },
     {
         "id": 44,
@@ -428,7 +428,7 @@ export const songList = [
         "anime": "Super no Ura de Yani Suu Futari (ABEMA) - Opening 1",
         "name": "\"Kuzuri Nen\" by Zutto Mayonaka de Ii no ni.",
         "video": "https://naedist.animemusicquiz.com/kn3c8u.webm",
-        "mp3": null
+        "mp3": "https://naedist.animemusicquiz.com/0pe3um.mp3",
     },
     {
         "id": 62,
