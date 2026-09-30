@@ -1197,7 +1197,7 @@ export const songList = [
     },
     {
         "id": 150,
-        "anime": "White Album 2nd Season - EP1",
+        "anime": "White Album 2nd Season - EP1 IN",
         "name": "\"SOUND OF DESTINY\" by Nana Mizuki",
         "video": "https://naedist.animemusicquiz.com/7g65n1.webm",
         "mp3": null,
@@ -1234,5 +1234,13 @@ export const songList = [
         "video": "https://files.catbox.moe/ru2662.webm",
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=vh6iXWWE0pE"
+    },
+    {
+        "id": 155,
+        "anime": "Mahou Shoujo Lyrical Nanoha EXCEEDS: Gun Blaze Vengeance - EP10 IN",
+        "name": "\"Anchor Flame\" by Nana Mizuki",
+        "video": "https://naedist.animemusicquiz.com/j5ze8mxzk6h0ucm4.webm",
+        "mp3": null,
+        "full": "https://www.youtube.com/watch?v=1ExF0J1oLwo"
     },
 ] satisfies Song[];
