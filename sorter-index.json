@@ -64,6 +64,14 @@
       "deadline": "2026-08-29T04:00:00.000Z"
     },
     {
+      "slug": "boa",
+      "title": "BoA",
+      "description": "Party rank sorter BoA anime songs",
+      "tags": [
+        "Artist"
+      ]
+    },
+    {
       "slug": "code-geass-op-ed",
       "title": "Code Geass OP/ED",
       "description": "Party rank sorter for Code Geass openings and endings.",
