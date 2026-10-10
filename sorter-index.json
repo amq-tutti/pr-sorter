@@ -181,6 +181,15 @@
       "deadline": "2026-09-25T15:59:00.000Z"
     },
     {
+      "slug": "shin-chan-movie-eds",
+      "title": "Shin-chan Movie EDs",
+      "description": "Party rank sorter for Crayon Shin-chan movie ending songs.",
+      "tags": [
+        "Franchise"
+      ],
+      "deadline": "2026-10-17T04:00:00.000Z"
+    },
+    {
       "slug": "si-vis",
       "title": "SI-VIS",
       "description": "Party rank sorter for SI-VIS anime songs",
