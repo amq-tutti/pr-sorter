@@ -1243,4 +1243,12 @@ export const songList = [
         "mp3": null,
         "full": "https://www.youtube.com/watch?v=1ExF0J1oLwo"
     },
+    {
+        "id": 156,
+        "anime": "Sora wa Akai Kawa no Hotori - OP2",
+        "name": "\"Akatsuki no Hoshi\" by Nana Mizuki",
+        "video": "https://nawdist.animemusicquiz.com/rt1x88.webm",
+        "mp3": null,
+        "full": null,
+    },
 ] satisfies Song[];
