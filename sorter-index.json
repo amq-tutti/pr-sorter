@@ -145,6 +145,15 @@
       "deadline": "2026-07-03T22:00:00.000Z"
     },
     {
+      "slug": "mami-ayukawa",
+      "title": "Mami Ayukawa",
+      "description": "Party rank sorter for Mami Ayukawa anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-10-30T15:59:00.000Z"
+    },
+    {
       "slug": "mami-kingetsu",
       "title": "Mami Kingetsu",
       "description": "Party rank sorter for Mami Kingetsu anime songs",
