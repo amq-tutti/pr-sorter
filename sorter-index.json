@@ -109,6 +109,15 @@
       "deadline": "2026-08-17T21:59:00.000Z"
     },
     {
+      "slug": "ikuko",
+      "title": "Ikuko",
+      "description": "Party rank sorter for Ikuko anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-11-06T15:59:00.000Z"
+    },
+    {
       "slug": "lozareena",
       "title": "Lozareena",
       "description": "Party rank sorter for Lozareena anime songs",
