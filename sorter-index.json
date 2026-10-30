@@ -64,6 +64,15 @@
       "deadline": "2026-08-29T04:00:00.000Z"
     },
     {
+      "slug": "ayame",
+      "title": "AYAME / AliA",
+      "description": "Party rank sorter for AYAME / AliA anime songs",
+      "tags": [
+        "Artist"
+      ],
+      "deadline": "2026-11-07T04:59:00.000Z"
+    },
+    {
       "slug": "boa",
       "title": "BoA",
       "description": "Party rank sorter BoA anime songs",
