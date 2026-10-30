@@ -87,4 +87,11 @@ export const songList = [
         "video": "https://naedist.animemusicquiz.com/s0ramwt08tj6sjjw.webm",
         "mp3": "https://naedist.animemusicquiz.com/38io3i.mp3"
     },
+    {
+        "id": 13,
+        "anime": "Hyouken no Majutsushi ga Sekai o Suberu II - Opening 1",
+        "name": "\"Diamond Dust\" by Sizuk feat. AYAME",
+        "video": "https://naedist.animemusicquiz.com/74e3bi.webm",
+        "mp3": "https://naedist.animemusicquiz.com/antdv7.mp3"
+    }
 ] satisfies Song[];
