@@ -3,14 +3,88 @@
 import type { Song } from '../src/songs';
 
 export const songList = [
-    {"id": 1, "anime": "0-saiji Start Dash Monogatari Season 2 - Ending 1", "name": "\"Beyond the Trajectory\" by Chata", "video": "https://eudist.animemusicquiz.com/5u2mhk.webm", "mp3": null},
-    {"id": 2, "anime": "1-punkan dake Furete mo Ii yo... Share House no Himitsu Rule. - Ending 1", "name": "\"Session Sadame Night\" by Dai Takanashi", "video": "https://eudist.animemusicquiz.com/f23gq2.webm", "mp3": null},
-    {"id": 3, "anime": "A-Rank Party wo Ridatsu shita Ore wa, Moto Oshiego-tachi to Meikyuu Shinbu wo Mezasu. - Ending 1", "name": "\"Treasure Chest\" by Yuki Tanaka", "video": "https://eudist.animemusicquiz.com/agsvoz.webm", "mp3": "https://eudist.animemusicquiz.com/i3vp9q.mp3"},
-    {"id": 4, "anime": "Akuyaku Reijou Tensei Ojisan - Ending 1", "name": "\"Matsuken Samba II\" by Kazuhiko Inoue, M・A・O", "video": "https://eudist.animemusicquiz.com/e8q47f.webm", "mp3": "https://eudist.animemusicquiz.com/dje0hr.mp3"},
-    {"id": 5, "anime": "Amagami-san Chi no Enmusubi - Ending 2", "name": "\"Kamisama no Iu Toori!\" by ≠ME", "video": "https://eudist.animemusicquiz.com/p4etz1.webm", "mp3": "https://eudist.animemusicquiz.com/wz8z3p.mp3"},
-    {"id": 6, "anime": "Ameku Takao no Suiri Karte - Ending 1", "name": "\"will be fine\" by Gospellers feat. Anly", "video": "https://eudist.animemusicquiz.com/0spf2m.webm", "mp3": "https://eudist.animemusicquiz.com/iagxs7.mp3"},
-    {"id": 7, "anime": "Ao no Exorcist: Yosuga-hen - Ending 1", "name": "\"Overlap\" by Shiyui", "video": "https://eudist.animemusicquiz.com/3z1d8i.webm", "mp3": "https://eudist.animemusicquiz.com/162vdv.mp3"},
-    {"id": 8, "anime": "Ao no Hako - Ending 2", "name": "\"Contrast\" by TOMOO", "video": "https://eudist.animemusicquiz.com/qmcqk3.webm", "mp3": "https://eudist.animemusicquiz.com/l2sgqo.mp3"},
-    {"id": 9, "anime": "Ao no Miburo - Ending 2", "name": "\"Fragment\" by osage", "video": "https://eudist.animemusicquiz.com/8b8iva.webm", "mp3": "https://eudist.animemusicquiz.com/0yt4lm.mp3"},
-    {"id": 10, "anime": "Arafou Otoko no Isekai Tsuuhan - Ending 1", "name": "\"Aicraft\" by Kiminone", "video": "https://eudist.animemusicquiz.com/ohlrpc.webm", "mp3": "https://eudist.animemusicquiz.com/74jbjn.mp3"},
+    {
+        "id": 1,
+        "anime": "Inou no AICis - Opening 1",
+        "name": "\"limit\" by AliA",
+        "video": "https://naedist.animemusicquiz.com/9nqlxn.webm",
+        "mp3": "https://naedist.animemusicquiz.com/hv9c6i.mp3"
+    },
+    {
+        "id": 2,
+        "anime": "Kimi to Boku no Saigo no Senjou, Arui wa Sekai ga Hajimaru Seisen Season II - Opening 1",
+        "name": "\"Senaka Awase\" by AliA",
+        "video": "https://naedist.animemusicquiz.com/dt61n3.webm",
+        "mp3": "https://naedist.animemusicquiz.com/lio0sj.mp3"
+    },
+    {
+        "id": 3,
+        "anime": "Kimi to Boku no Saigo no Senjou, Arui wa Sekai ga Hajimaru Seisen Season II - Ending 1",
+        "name": "\"Para Bellum\" by Sizuk feat. AYAME(from AliA)",
+        "video": "https://naedist.animemusicquiz.com/lhfaaw.webm",
+        "mp3": "https://naedist.animemusicquiz.com/su6ztg.mp3"
+    },
+    {
+        "id": 4,
+        "anime": "Kami wa Game ni Ueteiru. - Opening 1",
+        "name": "\"NewGame\" by AliA",
+        "video": "https://naedist.animemusicquiz.com/y5g9w2.webm",
+        "mp3": "https://naedist.animemusicquiz.com/pabmke.mp3"
+    },
+    {
+        "id": 5,
+        "anime": "Hyouken no Majutsushi ga Sekai o Suberu - Opening 1",
+        "name": "\"Dystopia\" by Sizuk feat. AYAME(from AliA)",
+        "video": "https://naedist.animemusicquiz.com/tuc59m.webm",
+        "mp3": "https://naedist.animemusicquiz.com/vpqh0v.mp3"
+    },
+    {
+        "id": 6,
+        "anime": "Keikenzumi na Kimi to, Keiken Zero na Ore ga, Otsukiai Suru Hanashi. - Ending 1",
+        "name": "\"Aikotoba\" by AliA",
+        "video": "https://naedist.animemusicquiz.com/32nibs.webm",
+        "mp3": "https://naedist.animemusicquiz.com/xzfq2m.mp3"
+    },
+    {
+        "id": 7,
+        "anime": "Kekkon Yubiwa Monogatari - Opening 1",
+        "name": "\"Lover's Eye\" by Sizuk feat. AYAME(from AliA)",
+        "video": "https://naedist.animemusicquiz.com/rgjy57.webm",
+        "mp3": "https://naedist.animemusicquiz.com/o8jnwj.mp3"
+    },
+    {
+        "id": 8,
+        "anime": "Kekkon Yubiwa Monogatari - Ending 1",
+        "name": "\"Kokoro no Naka\" by AliA",
+        "video": "https://naedist.animemusicquiz.com/wkel3q.webm",
+        "mp3": "https://naedist.animemusicquiz.com/4ezgig.mp3"
+    },
+    {
+        "id": 9,
+        "anime": "Kekkon Yubiwa Monogatari II - Opening 1",
+        "name": "\"Daybreak\" by Sizuk feat. AYAME",
+        "video": "https://naedist.animemusicquiz.com/lw1aafegsfb4rii9.webm",
+        "mp3": "https://naedist.animemusicquiz.com/ymjrqp.mp3"
+    },
+    {
+        "id": 10,
+        "anime": "Reincarnation no Kaben - Ending 1",
+        "name": "\"Zero\" by Sizuk feat. AYAME",
+        "video": "https://naedist.animemusicquiz.com/l31rnv.webm",
+        "mp3": "https://naedist.animemusicquiz.com/r8y12v.mp3"
+    },
+    {
+        "id": 11,
+        "anime": "Chuuzenji-sensei Mononoke Kougiroku: Sensei ga Nazo o Toite Shimaukara. - Ending 1",
+        "name": "\"Kimi no Shiranai Koto\" by Sizuk feat. AYAME",
+        "video": "https://naedist.animemusicquiz.com/8ku9p2.webm",
+        "mp3": "https://naedist.animemusicquiz.com/4wmsa4.mp3"
+    },
+    {
+        "id": 12,
+        "anime": "Tensei shitara Dragon no Tamago Datta: Saikyou Igai Mezasa Nee - Opening 1",
+        "name": "\"Gliding Claw\" by Sizuk feat. AYAME",
+        "video": "https://naedist.animemusicquiz.com/s0ramwt08tj6sjjw.webm",
+        "mp3": "https://naedist.animemusicquiz.com/38io3i.mp3"
+    },
 ] satisfies Song[];
