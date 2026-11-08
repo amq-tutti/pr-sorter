@@ -73,6 +73,15 @@
       "deadline": "2026-11-07T04:59:00.000Z"
     },
     {
+      "slug": "bleach",
+      "title": "Bleach",
+      "description": "Party rank sorter for Bleach anime songs.",
+      "tags": [
+        "Franchise"
+      ],
+      "deadline": "2026-11-29T04:59:00.000Z"
+    },
+    {
       "slug": "boa",
       "title": "BoA",
       "description": "Party rank sorter BoA anime songs",
