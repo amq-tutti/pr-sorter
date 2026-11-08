@@ -3,7 +3,7 @@ import type { AppConfig } from "../src/app/types";
 export const config = {
   localStoragePrefix: "bleach",
   title: "Bleach",
-  description: "Party rank sorter for Bleach anime songs.",
+  description: "Party rank sorter for Bleach anime songs",
   tags: ["Franchise"],
   deadline: new Date("2026-11-29T04:59:00.000Z"),
   googleSheets: {
